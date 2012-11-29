@@ -1,0 +1,24 @@
+
+VRAGEN
+------
+Are there any flights that only occur once every two weeks?
+Do we have to differentiate between the actual duration of the flight and the planned duration?
+Is our decomposition of manufacturer-airplanes-airplane models too far fetched?
+
+
+
+AANNAMES
+--------
+Vluchtnummer per vlucht, onafhankelijk van het vliegtuig
+Schedule-schedulItem kan mss nog worden verbeterd
+tijdstip per flight
+elke 1..* ipv 0..* in ons systeem
+
+
+
+TODO
+----
+During different times of the year, the number of ﬂights may change and the prices
+will vary. For example, in peak season the number of ﬂights will increase, whereas
+in low season the number of ﬂights will decrease and prices may decrease. Some
+airlines do not ﬂy on religious holidays.
