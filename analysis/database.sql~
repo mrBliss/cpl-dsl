@@ -160,7 +160,7 @@ DROP TABLE IF EXISTS `FlightMoment`;
 CREATE TABLE `FlightMoment` (
   `code_FlightTemplate` SMALLINT NULL DEFAULT NULL,
   `code_AirlineCompany_FlightTemplate` VARCHAR(3) NOT NULL DEFAULT 'XXX',
-  `weekday` ENUM('MON','TUE','WED','THU','FRI','SAT','SUN') NULL DEFAULT NULL,
+  `weekday` ENUM NULL DEFAULT NULL,
   `time` TIME NULL DEFAULT NULL,
   `id` BIGINT NULL AUTO_INCREMENT DEFAULT NULL,
   UNIQUE KEY (`weekday`, `time`, `code_FlightTemplate`, `code_AirlineCompany_FlightTemplate`),
