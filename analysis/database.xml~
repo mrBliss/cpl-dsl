@@ -59,7 +59,7 @@
 <row name="name" null="1" autoincrement="0">
 <datatype>VARCHAR(100)</datatype>
 <default>NULL</default></row>
-<row name="id_City" null="1" autoincrement="0">
+<row name="id_City" null="0" autoincrement="0">
 <datatype>INT</datatype>
 <default>NULL</default><relation table="City" row="id" />
 </row>
@@ -153,7 +153,7 @@
 <row name="number" null="1" autoincrement="0">
 <datatype>INT</datatype>
 <default>NULL</default></row>
-<row name="id_Class" null="1" autoincrement="0">
+<row name="id_Class" null="0" autoincrement="0">
 <datatype>INT</datatype>
 <default>NULL</default><relation table="Class" row="id" />
 </row>
@@ -252,7 +252,7 @@
 <row name="maxNbOfSeats" null="1" autoincrement="0">
 <datatype>MEDIUMINT</datatype>
 <default>NULL</default></row>
-<row name="id_Manufacturer" null="1" autoincrement="0">
+<row name="id_Manufacturer" null="0" autoincrement="0">
 <datatype>INT</datatype>
 <default>NULL</default><relation table="Manufacturer" row="id" />
 </row>
