@@ -59,7 +59,7 @@
 <row name="name" null="1" autoincrement="0">
 <datatype>VARCHAR(100)</datatype>
 <default>NULL</default></row>
-<row name="id_City" null="0" autoincrement="0">
+<row name="id_City" null="1" autoincrement="0">
 <datatype>INT</datatype>
 <default>NULL</default><relation table="City" row="id" />
 </row>
@@ -96,13 +96,13 @@
 </key>
 </table>
 <table x="1356" y="97" name="FlightTemplate">
-<row name="code_fromAirport_Connection" null="0" autoincrement="0">
+<row name="code_fromAirport_Connection" null="1" autoincrement="0">
 <datatype>VARCHAR(3)</datatype>
-<default>'NULL'</default><relation table="Connection" row="code_fromAirport" />
+<default>NULL</default><relation table="Connection" row="code_fromAirport" />
 </row>
-<row name="code_toAirport_Connection" null="0" autoincrement="0">
+<row name="code_toAirport_Connection" null="1" autoincrement="0">
 <datatype>VARCHAR(3)</datatype>
-<default>'NULL'</default><relation table="Connection" row="code_toAirport" />
+<default>NULL</default><relation table="Connection" row="code_toAirport" />
 </row>
 <row name="code" null="0" autoincrement="0">
 <datatype>VARCHAR(4)</datatype>
@@ -153,7 +153,7 @@
 <row name="number" null="1" autoincrement="0">
 <datatype>INT</datatype>
 <default>NULL</default></row>
-<row name="id_Class" null="0" autoincrement="0">
+<row name="id_Class" null="1" autoincrement="0">
 <datatype>INT</datatype>
 <default>NULL</default><relation table="Class" row="id" />
 </row>
@@ -252,7 +252,7 @@
 <row name="maxNbOfSeats" null="1" autoincrement="0">
 <datatype>MEDIUMINT</datatype>
 <default>NULL</default></row>
-<row name="id_Manufacturer" null="0" autoincrement="0">
+<row name="id_Manufacturer" null="1" autoincrement="0">
 <datatype>INT</datatype>
 <default>NULL</default><relation table="Manufacturer" row="id" />
 </row>
@@ -272,4 +272,3 @@
 </key>
 </table>
 </sql>
-

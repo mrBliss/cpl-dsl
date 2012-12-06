@@ -33,7 +33,7 @@
 	</group>
 	
 	<group label="Miscellaneous" color="rgb(200,200,255)">
-		<type label="ENUM" length="1" sql="ENUM" quote=""/>
+		<type label="ENUM" length="1" sql="ENUM('MON','TUE','WED','THU','FRI','SAT','SUN')" quote=""/>
 		<type label="SET" length="1" sql="SET" quote=""/>
 		<type label="Bit" length="0" sql="bit" quote=""/>
 	</group>
@@ -96,13 +96,13 @@
 </key>
 </table>
 <table x="1356" y="97" name="FlightTemplate">
-<row name="code_fromAirport_Connection" null="0" autoincrement="0">
+<row name="code_fromAirport_Connection" null="1" autoincrement="0">
 <datatype>VARCHAR(3)</datatype>
-<default>'NULL'</default><relation table="Connection" row="code_fromAirport" />
+<default>NULL</default><relation table="Connection" row="code_fromAirport" />
 </row>
-<row name="code_toAirport_Connection" null="0" autoincrement="0">
+<row name="code_toAirport_Connection" null="1" autoincrement="0">
 <datatype>VARCHAR(3)</datatype>
-<default>'NULL'</default><relation table="Connection" row="code_toAirport" />
+<default>NULL</default><relation table="Connection" row="code_toAirport" />
 </row>
 <row name="code" null="0" autoincrement="0">
 <datatype>VARCHAR(4)</datatype>
@@ -272,4 +272,3 @@
 </key>
 </table>
 </sql>
-
