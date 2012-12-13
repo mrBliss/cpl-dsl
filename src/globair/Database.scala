@@ -6,24 +6,24 @@ trait DBFields {
 
   case class AirportCode(code: String) extends StringField {
     require(code matches "[A-Z]{3}",
-            "An airport code must consist of 3 capital letters")
+      "An airport code must consist of 3 capital letters")
     val rep = code
   }
 
   case class AirlineCode(code: String) extends StringField {
     require(code matches "[A-Z]{2,3}",
-            "An airline code must consist of 2 to 3 capital letters")
+      "An airline code must consist of 2 to 3 capital letters")
     val rep = code
   }
 
   case class FlightCodeNumber(codeNumber: String) extends StringField {
     require(codeNumber matches "[0-9]{3,4}",
-            "A flight code number must consist of 3 to 4 digits")
+      "A flight code number must consist of 3 to 4 digits")
     val rep = codeNumber
   }
 
   case class FlightCode(ac: AirlineCode, fcn: FlightCodeNumber)
-       extends StringField {
+    extends StringField {
     override val rep = ac.toString + fcn.toString
   }
 }
@@ -42,7 +42,7 @@ trait DBEntities {
   }
 
   case class Airport(code: AirportCode, name: String, city: City)
-       extends Entity {
+    extends Entity {
     def row = columns("code" -> code, "name" -> name, "city" -> city)
   }
 
@@ -55,7 +55,7 @@ trait DBEntities {
   }
 
   case class Connection(from: Airport, to: Airport, distance: Double)
-       extends Entity {
+    extends Entity {
     val row = columns("from" -> from, "to" -> to, "distance" -> distance)
   }
 
@@ -64,9 +64,9 @@ trait DBEntities {
   }
 
   case class Seat(flight: Flight, number: Int, seatClass: SeatClass)
-       extends Entity {
+    extends Entity {
     val row = columns("flight" -> flight, "number" -> number,
-                      "seatClass" -> seatClass)
+      "seatClass" -> seatClass)
   }
 
   case class Ticket(seat: Seat, price: Price) extends Entity {
@@ -74,16 +74,16 @@ trait DBEntities {
   }
 
   case class Flight(template: FlightTemplate, date: Date, moment: FlightMoment,
-                    airplane: Airplane) extends Entity {
+    airplane: Airplane) extends Entity {
     val row = columns("template" -> template, "date" -> date,
-                      "moment" -> moment, "airplane" -> airplane)
+      "moment" -> moment, "airplane" -> airplane)
   }
 
   // TODO link with FlightTemplate?
   case class FlightMoment(template: FlightTemplate, weekday: WeekDay,
-                          time: Time) extends Entity {
+    time: Time) extends Entity {
     val row = columns("template" -> template, "weekday" -> weekday,
-                      "time" -> time)
+      "time" -> time)
   }
 
   // TODO id was code
@@ -91,10 +91,10 @@ trait DBEntities {
     val row = columns("model" -> model)
   }
 
-  case class AirplaneModel(maxNbOfSeats: Int, maxSpeed: Double,
-                           manufacturer: Manufacturer) extends Entity {
+  case class AirplaneModel(name: String, maxNbOfSeats: Int, maxSpeed: Double,
+    manufacturer: Manufacturer) extends Entity {
     val row = columns("maxNbOfSeats" -> maxNbOfSeats, "maxSpeed" -> maxSpeed,
-                      "manufacturer" -> manufacturer)
+      "manufacturer" -> manufacturer)
   }
 
   case class Manufacturer(name: String) extends Entity {
@@ -102,8 +102,8 @@ trait DBEntities {
   }
 
   case class FlightTemplate(codeNumber: FlightCodeNumber,
-                            company: AirlineCompany, connection: Connection)
-       extends Entity {
+    company: AirlineCompany, connection: Connection)
+    extends Entity {
 
     def this(codeNumberStr: String, companyCodeStr: String, conn: Connection) =
       this(new FlightCodeNumber(codeNumberStr), AirlineCompany(companyCodeStr), conn)
@@ -111,13 +111,12 @@ trait DBEntities {
     lazy val flightCode: FlightCode = new FlightCode(company.code, codeNumber)
 
     val row = columns("codeNumber" -> codeNumber, "company" -> company,
-                      "connection" -> connection) // TODO
+      "connection" -> connection) // TODO
   }
 
   object FlightTemplate {
     val FlightCode = """([A-Z]{2,3})([0-9]{3,4})""".r
-    def apply (flightCode: String, fromTo: (Airport, Airport), distance: Double)
-              (when: (Int, Int, Seq[WeekDay])): FlightTemplate = {
+    def apply(flightCode: String, fromTo: (Airport, Airport), distance: Double)(when: (Int, Int, Seq[WeekDay])): FlightTemplate = {
       flightCode match {
         case FlightCode(companyCode, flightCode) => {
           val (from, to) = fromTo
@@ -159,12 +158,29 @@ trait FlightDSL {
 
   def at(time: (Int, Int), weekDays: Seq[WeekDay]) = (time._1, time._2, weekDays)
 
+  implicit def airplaneModelOf(airplaneModelName: String) = new {
+    def of(company: Manufacturer) = new {
+      def carries(passengers: Int) = new {
+        def flies(speed: Int): AirplaneModel =
+          new AirplaneModel(airplaneModelName, passengers, speed, company)
+      }
+    }
+  }
+
   implicit def hourSyntax(hours: Int) = new {
     def h(minutes: Int) = (hours, minutes)
   }
 
   implicit def kmUnit(kms: Int) = new {
     def km: Double = kms
+  }
+
+  implicit def kmphUnit(kmphs: Int) = new {
+    def kmph: Int = kmphs
+  }
+
+  implicit def pUnit(ps: Int) = new {
+    def p: Integer = ps
   }
 
 }
@@ -190,7 +206,7 @@ object Main extends App with DBFields with DBEntities {
 
   while (rs.next()) {
     println("id = %d, name = %s, motto = %s" format (rs.getInt("id"),
-                                                     rs.getString("name")))
+      rs.getString("name")))
   }
 
   conn.close()
