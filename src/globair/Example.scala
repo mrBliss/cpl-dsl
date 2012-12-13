@@ -1,6 +1,8 @@
 package globair
 
 object Example extends DB with FlightDSL {
+  import DatabaseDSL._
+
   // Countries
   val Belgium = country("Belgium")
   val France = country("France")
@@ -31,17 +33,19 @@ object Example extends DB with FlightDSL {
   val LHR = ("LHR", "London Heathrow Airport") at London
   val JFK = ("JFK", "John F. Kennedy International Airport") at NewYork
 
-  //Manufacturers
+  // Manufacturers
   val Airbus = Manufacturer("Airbus")
   val Boeing = Manufacturer("Boeing")
   val Cessna = Manufacturer("Cessna")
 
-  import DatabaseDSL._
+  // Airline Companies
+  val BM = company("BM", "British Midlands Airways")
+  val SN = company("SN", "SN Brussels Airlines")
 
   // Flights
-  FlightTemplate("BM1628", BRU -> CDG, 757.km) {
+  FlightTemplate(BM, 1628)(BRU -> CDG, 757.km) {
     at(9 h 55, every(Monday, Wednesday, Friday))
-    //by(Boeing727, Business -> 24, Economy, 123)
+    // by(Boeing727, Business -> 24, Economy, 123)
   }
 
   // Airplane Models

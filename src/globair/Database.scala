@@ -16,9 +16,9 @@ trait DBFields {
     val rep = code
   }
 
-  case class FlightCodeNumber(codeNumber: String) extends StringField {
-    require(codeNumber matches "[0-9]{3,4}",
-      "A flight code number must consist of 3 to 4 digits")
+  case class FlightCodeNumber(codeNumber: Int) extends IntField {
+    require(codeNumber.toString matches "[0-9]{3,4}",
+            "A flight code number must consist of 3 to 4 digits")
     val rep = codeNumber
   }
 
@@ -48,10 +48,6 @@ trait DBEntities {
 
   case class AirlineCompany(code: AirlineCode, name: String) extends Entity {
     def row = columns("code" -> code, "name" -> name)
-  }
-
-  object AirlineCompany {
-    def apply(companyCode: String): AirlineCompany = sys.error("Not implemented")
   }
 
   case class Connection(from: Airport, to: Airport, distance: Double)
@@ -105,9 +101,6 @@ trait DBEntities {
     company: AirlineCompany, connection: Connection)
     extends Entity {
 
-    def this(codeNumberStr: String, companyCodeStr: String, conn: Connection) =
-      this(new FlightCodeNumber(codeNumberStr), AirlineCompany(companyCodeStr), conn)
-
     lazy val flightCode: FlightCode = new FlightCode(company.code, codeNumber)
 
     val row = columns("codeNumber" -> codeNumber, "company" -> company,
@@ -119,10 +112,26 @@ trait DBEntities {
 
 class DB extends DBFields with DBEntities
 
-trait FlightDSL {
+trait FlightDSL extends DelayedInit {
   self: DB =>
 
   import DatabaseDSL.WeekDay
+  import collection.mutable.ListBuffer
+
+  private val initCode = new ListBuffer[() => Unit]
+  override def delayedInit(body: => Unit) {
+    initCode += (() => body)
+  }
+
+  def run() {
+    for (proc <- initCode) proc()
+
+    println(countries)
+    println(cities)
+    println(airports)
+    println(flightTemplates)
+    println("DONE")
+  }
 
   // Countries
   private var countries: List[Country] = Nil
@@ -149,6 +158,17 @@ trait FlightDSL {
       airport
     }
   }
+
+  // Airline Companies
+  private var airlineCompanies: List[AirlineCompany] = Nil
+  def company(code: String, name: String): AirlineCompany = {
+    val company = new AirlineCompany(AirlineCode(code), name)
+    airlineCompanies ::= company
+    company
+  }
+
+  // Connections
+  private var connections: List[Connection] = Nil
 
   // Flights
   def every(weekDays: WeekDay*): Seq[WeekDay] = weekDays
@@ -180,22 +200,26 @@ trait FlightDSL {
     def p: Integer = ps
   }
 
-  private val FlightCodeRE = """([A-Z]{2,3})([0-9]{3,4})""".r
-  def FlightTemplate(flightCode: String, fromTo: (Airport, Airport), distance: Double)
+  private var flightTemplates: List[FlightTemplate] = Nil
+  def FlightTemplate(company: AirlineCompany, flightCode: Int)
+                    (fromTo: (Airport, Airport), distance: Double)
                     (when: (Int, Int, Seq[WeekDay])): FlightTemplate = {
-    flightCode match {
-      case FlightCodeRE(companyCode, flightCode) => {
-        val (from, to) = fromTo
-        new FlightTemplate(flightCode, companyCode, new Connection(from, to, distance))
-      }
-      case _ => sys.error("Invalid flight code") // TODO exception
-    }
+    val (from, to) = fromTo
+    val conn = new Connection(from, to, distance)
+    connections ::= conn
+    val ft = new FlightTemplate(new FlightCodeNumber(flightCode), company, conn)
+    flightTemplates ::= ft
+    ft
   }
+}
 
+object Main extends App {
+
+  Example.run()
 
 }
 
-object Main extends App with DBFields with DBEntities {
+object Main2 extends App with DBFields with DBEntities {
   import java.sql.DriverManager
 
   val c = new Country("Belgium")
