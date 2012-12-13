@@ -8,14 +8,14 @@ object DatabaseDSL {
 
   type ID = Int
 
-  class IDGenerator(start: ID = 0) {
-    private var nextID = 0
-    def next(): ID = {
-      val id = nextID
-      nextID += 1
-      id
-    }
-  }
+  // class IDGenerator(start: ID = 0) {
+  //   private var nextID = 0
+  //   def next(): ID = {
+  //     val id = nextID
+  //     nextID += 1
+  //     id
+  //   }
+  // }
 
   // TODO temp
   type Time = (Int, Int)

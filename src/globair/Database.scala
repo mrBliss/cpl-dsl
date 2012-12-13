@@ -1,6 +1,6 @@
 package globair
 
-object Database {
+trait DBFields {
 
   import DatabaseDSL._
 
@@ -26,9 +26,15 @@ object Database {
        extends StringField {
     override val rep = ac.toString + fcn.toString
   }
+}
 
-  case class Country(name: String, motto: String) extends Entity {
-    def row = columns("name" -> name, "motto" -> motto)
+trait DBEntities {
+  self: DBFields =>
+
+  import DatabaseDSL._
+
+  case class Country(name: String) extends Entity {
+    def row = columns("name" -> name)
   }
 
   case class City(name: String, country: Country) extends Entity {
@@ -104,16 +110,69 @@ object Database {
 
     lazy val flightCode: FlightCode = new FlightCode(company.code, codeNumber)
 
-    val row = columns() // TODO
+    val row = columns("codeNumber" -> codeNumber, "company" -> company,
+                      "connection" -> connection) // TODO
+  }
+
+  object FlightTemplate {
+    val FlightCode = """([A-Z]{2,3})([0-9]{3,4})""".r
+    def apply (flightCode: String, fromTo: (Airport, Airport), distance: Double)
+              (when: (Int, Int, Seq[WeekDay])): FlightTemplate = {
+      flightCode match {
+        case FlightCode(companyCode, flightCode) => {
+          val (from, to) = fromTo
+          new FlightTemplate(flightCode, companyCode, new Connection(from, to, distance))
+        }
+        case _ => sys.error("Invalid flight code")
+      }
+    }
   }
 
 }
 
-object Main extends App {
-  import java.sql.DriverManager
-  import Database._
+class DB extends DBFields with DBEntities
 
-  val c = new Country("Belgium", "Boop")
+trait FlightDSL {
+  self: DB =>
+
+  import DatabaseDSL.WeekDay
+
+  // Countries
+  var countries: List[Country] = Nil
+  def country(name: String): Country = {
+    val country = Country(name)
+    countries ::= country
+    country
+  }
+  // Cities
+  implicit def cityIn(cityName: String) = new {
+    def in(country: Country) = new City(cityName, country)
+  }
+  // Airports
+  implicit def airportAt(pair: (String, String)) = new {
+    def at(city: City): Airport =
+      new Airport(new AirportCode(pair._1), pair._2, city)
+  }
+
+  // Flights
+  def every(weekDays: WeekDay*): Seq[WeekDay] = weekDays
+
+  def at(time: (Int, Int), weekDays: Seq[WeekDay]) = (time._1, time._2, weekDays)
+
+  implicit def hourSyntax(hours: Int) = new {
+    def h(minutes: Int) = (hours, minutes)
+  }
+
+  implicit def kmUnit(kms: Int) = new {
+    def km: Double = kms
+  }
+
+}
+
+object Main extends App with DBFields with DBEntities {
+  import java.sql.DriverManager
+
+  val c = new Country("Belgium")
 
   Class.forName("org.sqlite.JDBC");
 
@@ -121,19 +180,17 @@ object Main extends App {
 
   val statement = conn.createStatement()
   statement.executeUpdate("DROP TABLE IF EXISTS Country");
-  statement.executeUpdate("CREATE TABLE Country (id integer, name string, motto string)");
+  statement.executeUpdate("CREATE TABLE Country (id integer, name string)");
 
   conn.setAutoCommit(false)
   c.addToBatch(conn)
   conn.commit()
 
-
   val rs = statement.executeQuery("SELECT * FROM Country");
 
   while (rs.next()) {
     println("id = %d, name = %s, motto = %s" format (rs.getInt("id"),
-                                                     rs.getString("name"),
-                                                     rs.getString("motto")))
+                                                     rs.getString("name")))
   }
 
   conn.close()
