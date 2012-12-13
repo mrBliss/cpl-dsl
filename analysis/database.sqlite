@@ -1,0 +1,312 @@
+-- ---------------
+-- SQL IMPORT FILE
+--
+-- Weekdays as extra table
+--
+-- ---------------
+
+-- ---
+-- Globals
+-- ---
+
+-- SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
+-- SET FOREIGN_KEY_CHECKS=0;
+
+-- ---
+-- Table 'City'
+-- 
+-- ---
+
+DROP TABLE IF EXISTS `City`;
+		
+CREATE TABLE `City` (
+  `id` INTEGER PRIMARY KEY,
+  `name` VARCHAR(100) NULL DEFAULT NULL,
+  `id_Country` INT NULL DEFAULT NULL,
+  FOREIGN KEY (id_Country) REFERENCES `Country` (`id`)
+);
+
+-- ---
+-- Table 'Airport'
+-- 
+-- ---
+
+DROP TABLE IF EXISTS `Airport`;
+		
+CREATE TABLE `Airport` (
+  `code` VARCHAR(3) NOT NULL DEFAULT '???',
+  `name` VARCHAR(100) NULL DEFAULT NULL,
+  `id_City` INT NULL DEFAULT NULL,
+  PRIMARY KEY (`code`),
+  FOREIGN KEY (id_City) REFERENCES `City` (`id`)
+);
+
+-- ---
+-- Table 'Country'
+-- 
+-- ---
+
+DROP TABLE IF EXISTS `Country`;
+		
+CREATE TABLE `Country` (
+  `id` INTEGER PRIMARY KEY,
+  `name` VARCHAR(100) NULL DEFAULT NULL
+);
+
+-- ---
+-- Table 'Connection'
+-- 
+-- ---
+
+DROP TABLE IF EXISTS `Connection`;
+		
+CREATE TABLE `Connection` (
+  `distance` DOUBLE NULL DEFAULT NULL,
+  `code_fromAirport` VARCHAR(3) NOT NULL DEFAULT '???',
+  `code_toAirport` VARCHAR(3) NOT NULL DEFAULT '???',
+  UNIQUE (`code_fromAirport`, `code_toAirport`),
+  FOREIGN KEY (code_fromAirport) REFERENCES `Airport` (`code`),
+  FOREIGN KEY (code_toAirport) REFERENCES `Airport` (`code`)
+);
+
+-- ---
+-- Table 'FlightTemplate'
+-- 
+-- ---
+
+DROP TABLE IF EXISTS `FlightTemplate`;
+		
+CREATE TABLE `FlightTemplate` (
+  `code_fromAirport_Connection` VARCHAR(3) NULL DEFAULT NULL,
+  `code_toAirport_Connection` VARCHAR(3) NULL DEFAULT NULL,
+  `code` VARCHAR(4) NOT NULL DEFAULT '????',
+  `code_AirlineCompany` VARCHAR(3) NOT NULL DEFAULT 'XXX',
+  UNIQUE (`code`, `code_AirlineCompany`),
+  FOREIGN KEY (code_fromAirport_Connection) REFERENCES `Connection` (`code_fromAirport`),
+  FOREIGN KEY (code_toAirport_Connection) REFERENCES `Connection` (`code_toAirport`),
+  FOREIGN KEY (code_AirlineCompany) REFERENCES `AirlineCompany` (`code`)
+);
+
+-- ---
+-- Table 'AirlineCompany'
+-- 
+-- ---
+
+DROP TABLE IF EXISTS `AirlineCompany`;
+		
+CREATE TABLE `AirlineCompany` (
+  `code` VARCHAR(3) NOT NULL DEFAULT '???',
+  `name` VARCHAR(100) NULL DEFAULT NULL,
+  PRIMARY KEY (`code`)
+);
+
+-- ---
+-- Table 'Class'
+-- 
+-- ---
+
+DROP TABLE IF EXISTS `Class`;
+		
+CREATE TABLE `Class` (
+  `code_AirlineCompany` VARCHAR(3) NOT NULL DEFAULT 'XXX',
+  `id` INTEGER PRIMARY KEY,
+  `name` VARCHAR(100) NULL DEFAULT NULL,
+  FOREIGN KEY (code_AirlineCompany) REFERENCES `AirlineCompany` (`code`)
+);
+
+-- ---
+-- Table 'Seat'
+-- 
+-- ---
+
+DROP TABLE IF EXISTS `Seat`;
+		
+CREATE TABLE `Seat` (
+  `id` INTEGER PRIMARY KEY,
+  `id_Flight` INT NULL DEFAULT NULL,
+  `number` INT NULL DEFAULT NULL,
+  `id_Class` INT NULL DEFAULT NULL,
+  UNIQUE (`id_Flight`, `number`),
+  FOREIGN KEY (id_Flight) REFERENCES `Flight` (`id`),
+  FOREIGN KEY (id_Class) REFERENCES `Class` (`id`)
+);
+
+-- ---
+-- Table 'Ticket'
+-- 
+-- ---
+
+DROP TABLE IF EXISTS `Ticket`;
+		
+CREATE TABLE `Ticket` (
+  `id` INTEGER PRIMARY KEY,
+  `price` DECIMAL(19,4) NULL DEFAULT NULL,
+  `id_Seat` INT NULL DEFAULT NULL,
+  FOREIGN KEY (id_Seat) REFERENCES `Seat` (`id`)
+);
+
+-- ---
+-- Table 'Flight'
+-- 
+-- ---
+
+DROP TABLE IF EXISTS `Flight`;
+		
+CREATE TABLE `Flight` (
+  `id` INTEGER PRIMARY KEY,
+  `date` DATETIME NULL DEFAULT NULL,
+  `id_FlightMoment` INT NULL DEFAULT NULL,
+  `code_Airplane` VARCHAR(30) NULL DEFAULT NULL,
+  FOREIGN KEY (id_FlightMoment) REFERENCES `FlightMoment` (`id`),
+  FOREIGN KEY (code_Airplane) REFERENCES `Airplane` (`code`)
+);
+
+-- ---
+-- Table 'Weekday'
+-- 
+-- ---
+
+DROP TABLE IF EXISTS `Weekday`;
+		
+CREATE TABLE `Weekday` (
+  `short_name` VARCHAR(3) NULL DEFAULT NULL,
+  `long_name` VARCHAR(10) NULL DEFAULT NULL,
+  PRIMARY KEY (`short_name`)
+);
+
+INSERT INTO `Weekday` (`short_name`,`long_name`) VALUES
+('MON','Monday');
+
+INSERT INTO `Weekday` (`short_name`,`long_name`) VALUES
+('TUE','Tuesday');
+
+INSERT INTO `Weekday` (`short_name`,`long_name`) VALUES
+('WED','Wednesday');
+
+INSERT INTO `Weekday` (`short_name`,`long_name`) VALUES
+('THU','Thursday');
+
+INSERT INTO `Weekday` (`short_name`,`long_name`) VALUES
+('FRI','Friday');
+
+INSERT INTO `Weekday` (`short_name`,`long_name`) VALUES
+('SAT','Saturday');
+
+INSERT INTO `Weekday` (`short_name`,`long_name`) VALUES
+('SUN','Sunday');
+
+-- ---
+-- Table 'FlightMoment'
+-- 
+-- ---
+
+DROP TABLE IF EXISTS `FlightMoment`;
+		
+CREATE TABLE `FlightMoment` (
+  `code_FlightTemplate` VARCHAR(4) NULL DEFAULT NULL,
+  `code_AirlineCompany_FlightTemplate` VARCHAR(3) NOT NULL DEFAULT 'XXX',
+  `weekday` VARCHAR(3) NULL DEFAULT NULL,
+  `time` TIME NULL DEFAULT NULL,
+  `id` INTEGER PRIMARY KEY,
+  UNIQUE (`weekday`, `time`, `code_FlightTemplate`, `code_AirlineCompany_FlightTemplate`),
+  FOREIGN KEY (code_FlightTemplate) REFERENCES `FlightTemplate` (`code`),
+  FOREIGN KEY (code_AirlineCompany_FlightTemplate) REFERENCES `FlightTemplate` (`code_AirlineCompany`),
+  FOREIGN KEY (weekday) REFERENCES `Weekday`(`short_name`)
+);
+
+-- ---
+-- Table 'Airplane'
+-- 
+-- ---
+
+DROP TABLE IF EXISTS `Airplane`;
+		
+CREATE TABLE `Airplane` (
+  `code` VARCHAR(30) NOT NULL DEFAULT '????',
+  `id_AirplaneModel` INT NULL DEFAULT NULL,
+  PRIMARY KEY (`code`),
+  FOREIGN KEY (id_AirplaneModel) REFERENCES `AirplaneModel` (`id`)
+);
+
+-- ---
+-- Table 'AirplaneModel'
+-- 
+-- ---
+
+DROP TABLE IF EXISTS `AirplaneModel`;
+		
+CREATE TABLE `AirplaneModel` (
+  `id` INTEGER PRIMARY KEY,
+  `name` VARCHAR(50) NULL DEFAULT NULL,
+  `maxSpeed` DOUBLE NULL DEFAULT NULL,
+  `maxNbOfSeats` MEDIUMINT NULL DEFAULT NULL,
+  `id_Manufacturer` INT NULL DEFAULT NULL,
+  FOREIGN KEY (id_Manufacturer) REFERENCES `Manufacturer` (`id`)
+);
+
+-- ---
+-- Table 'Manufacturer'
+-- 
+-- ---
+
+DROP TABLE IF EXISTS `Manufacturer`;
+		
+CREATE TABLE `Manufacturer` (
+  `name` VARCHAR(100) NOT NULL DEFAULT 'NULL',
+  `id` INTEGER PRIMARY KEY
+);
+
+
+-- ---
+-- Table Properties
+-- ---
+
+-- ALTER TABLE `City` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+-- ALTER TABLE `Airport` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+-- ALTER TABLE `Country` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+-- ALTER TABLE `Connection` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+-- ALTER TABLE `FlightTemplate` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+-- ALTER TABLE `AirlineCompany` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+-- ALTER TABLE `Class` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+-- ALTER TABLE `Seat` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+-- ALTER TABLE `Ticket` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+-- ALTER TABLE `Flight` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+-- ALTER TABLE `FlightMoment` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+-- ALTER TABLE `Airplane` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+-- ALTER TABLE `AirplaneModel` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+-- ALTER TABLE `Manufacturer` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- ---
+-- Test Data
+-- ---
+
+-- INSERT INTO `City` (`id`,`name`,`id_Country`) VALUES
+-- ('','','');
+-- INSERT INTO `Airport` (`code`,`name`,`id_City`) VALUES
+-- ('','','');
+-- INSERT INTO `Country` (`id`,`name`) VALUES
+-- ('','');
+-- INSERT INTO `Connection` (`distance`,`code_fromAirport`,`code_toAirport`) VALUES
+-- ('','','');
+-- INSERT INTO `FlightTemplate` (`code_fromAirport_Connection`,`code_toAirport_Connection`,`code`,`code_AirlineCompany`) VALUES
+-- ('','','','');
+-- INSERT INTO `AirlineCompany` (`code`,`name`) VALUES
+-- ('','');
+-- INSERT INTO `Class` (`code_AirlineCompany`,`id`,`name`) VALUES
+-- ('','','');
+-- INSERT INTO `Seat` (`id`,`id_Flight`,`number`,`id_Class`) VALUES
+-- ('','','','');
+-- INSERT INTO `Ticket` (`id`,`price`,`id_Seat`) VALUES
+-- ('','','');
+-- INSERT INTO `Flight` (`id`,`date`,`id_FlightMoment`,`code_Airplane`) VALUES
+-- ('','','','');
+-- INSERT INTO `FlightMoment` (`code_FlightTemplate`,`code_AirlineCompany_FlightTemplate`,`weekday`,`time`,`id`) VALUES
+-- ('','','','','');
+-- INSERT INTO `Airplane` (`code`,`id_AirplaneModel`) VALUES
+-- ('','');
+-- INSERT INTO `AirplaneModel` (`id`,`name`,`maxSpeed`,`maxNbOfSeats`,`id_Manufacturer`) VALUES
+-- ('','','','','');
+-- INSERT INTO `Manufacturer` (`name`,`id`) VALUES
+-- ('','');
+
+
