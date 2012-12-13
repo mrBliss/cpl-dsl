@@ -2,6 +2,11 @@ package globair
 
 import java.sql.{ Connection, DriverManager, ResultSet, SQLException, Statement }
 
+trait Entity {
+
+
+}
+
 object SQLite extends App {
 
   // Load the SQLite driver
@@ -24,4 +29,3 @@ object SQLite extends App {
   conn.close()
 
 }
-
