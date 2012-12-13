@@ -114,20 +114,6 @@ trait DBEntities {
                       "connection" -> connection) // TODO
   }
 
-  object FlightTemplate {
-    val FlightCode = """([A-Z]{2,3})([0-9]{3,4})""".r
-    def apply (flightCode: String, fromTo: (Airport, Airport), distance: Double)
-              (when: (Int, Int, Seq[WeekDay])): FlightTemplate = {
-      flightCode match {
-        case FlightCode(companyCode, flightCode) => {
-          val (from, to) = fromTo
-          new FlightTemplate(flightCode, companyCode, new Connection(from, to, distance))
-        }
-        case _ => sys.error("Invalid flight code")
-      }
-    }
-  }
-
 }
 
 class DB extends DBFields with DBEntities
@@ -138,20 +124,29 @@ trait FlightDSL {
   import DatabaseDSL.WeekDay
 
   // Countries
-  var countries: List[Country] = Nil
+  private var countries: List[Country] = Nil
   def country(name: String): Country = {
     val country = Country(name)
     countries ::= country
     country
   }
   // Cities
+  private var cities: List[City] = Nil
   implicit def cityIn(cityName: String) = new {
-    def in(country: Country) = new City(cityName, country)
+    def in(country: Country) = {
+      val city = new City(cityName, country)
+      cities ::= city
+      city
+    }
   }
   // Airports
+  private var airports: List[Airport] = Nil
   implicit def airportAt(pair: (String, String)) = new {
-    def at(city: City): Airport =
-      new Airport(new AirportCode(pair._1), pair._2, city)
+    def at(city: City): Airport = {
+      val airport = new Airport(new AirportCode(pair._1), pair._2, city)
+      airports ::= airport
+      airport
+    }
   }
 
   // Flights
@@ -166,6 +161,20 @@ trait FlightDSL {
   implicit def kmUnit(kms: Int) = new {
     def km: Double = kms
   }
+
+
+  private val FlightCodeRE = """([A-Z]{2,3})([0-9]{3,4})""".r
+  def FlightTemplate(flightCode: String, fromTo: (Airport, Airport), distance: Double)
+                    (when: (Int, Int, Seq[WeekDay])): FlightTemplate = {
+    flightCode match {
+      case FlightCodeRE(companyCode, flightCode) => {
+        val (from, to) = fromTo
+        new FlightTemplate(flightCode, companyCode, new Connection(from, to, distance))
+      }
+      case _ => sys.error("Invalid flight code") // TODO exception
+    }
+  }
+
 
 }
 
