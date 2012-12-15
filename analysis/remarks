@@ -2,17 +2,19 @@
 VRAGEN
 ------
 
-* Are there any flights that only occur once every two weeks?
-
-* Do we have to differentiate between the actual duration of the
-  flight and the planned duration?
-
-* Is our decomposition of manufacturer-airplanes-airplane models too
-  far fetched?
-
 * Are we populating the whole database in one go, or is the DSL used
   to incrementally add new flights to the database, making use of data
-  already stored in the database?
+  already stored in the database? Take for instance the airports,
+  cities, countries, airplane models, etc., can we assume that they
+  are already present in the database, or should our DSL populate them
+  too?
+
+* Are there any flights that recur on a basis other than a weekly one,
+  like for instance once every two weeks, only on December 24th, or
+  every second Thursday of the month, etc.?
+
+* Should we store the airplane model manufacturers too?
+
 
 
 AANNAMES
@@ -26,7 +28,8 @@ elke 1..* ipv 0..* in ons systeem
 
 TODO
 ----
-During different times of the year, the number of ﬂights may change and the prices
-will vary. For example, in peak season the number of ﬂights will increase, whereas
-in low season the number of ﬂights will decrease and prices may decrease. Some
-airlines do not ﬂy on religious holidays.
+During different times of the year, the number of flights may change
+and the prices will vary. For example, in peak season the number of
+flights will increase, whereas in low season the number of flights
+will decrease and prices may decrease. Some airlines do not fly on
+religious holidays.
