@@ -192,8 +192,8 @@ trait FlightDSL extends DelayedInit {
     def km: Double = kms
   }
 
-  implicit def kmphUnit(kmphs: Int) = new {
-    def kmph: Int = kmphs
+  implicit def kmhUnit(kmhs: Int) = new {
+    def kmh: Int = kmhs
   }
 
   implicit def pUnit(ps: Int) = new {

@@ -49,6 +49,6 @@ object Example extends DB with FlightDSL {
   }
 
   // Airplane Models
-  val Boeing727 = "Boeing727" of Boeing carries 145.p flies 800.kmph
+  val Boeing727 = "Boeing727" of Boeing carries 145.p flies 800.kmh
 
 }
