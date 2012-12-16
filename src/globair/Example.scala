@@ -45,13 +45,17 @@ object Example extends DB with FlightDSL {
   val QF = company("QF", "Qantas Airways")
   val LH = company("LH", "Deutsche Lufthansa")
 
+  // Airplane Models
+  val AirbusA320 = "Airbus A320" of Airbus carries 150.p flies 828.kmh
+  val AirbusA380 = "Airbus A380" of Airbus carries 644.p flies 945.kmh
+  val Boeing727 = "Boeing 727" of Boeing carries 145.p flies 963.kmh
+  val Boeing737_800 = "Boeing 737-800" of Boeing carries 160.p flies 828.kmh
+
   // Flights
   FlightTemplate(BM, 1628)(BRU -> CDG, 757.km) {
     at(9 h 55, every(Monday, Wednesday, Friday))
     // by(Boeing727, Business -> 24, Economy, 123)
   }
 
-  // Airplane Models
-  val Boeing727 = "Boeing727" of Boeing carries 145.p flies 800.kmh
 
 }
