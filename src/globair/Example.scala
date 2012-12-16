@@ -38,9 +38,12 @@ object Example extends DB with FlightDSL {
   val Boeing = Manufacturer("Boeing")
   val Cessna = Manufacturer("Cessna")
 
-  // Airline Companies
+  // Airline Companies (the code is the official IATA code)
   val BM = company("BM", "British Midlands Airways")
   val SN = company("SN", "SN Brussels Airlines")
+  val FR = company("FR", "Ryanair")
+  val QF = company("QF", "Qantas Airways")
+  val LH = company("LH", "Deutsche Lufthansa")
 
   // Flights
   FlightTemplate(BM, 1628)(BRU -> CDG, 757.km) {
