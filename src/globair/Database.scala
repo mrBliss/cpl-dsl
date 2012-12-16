@@ -87,9 +87,9 @@ trait DBEntities {
     val row = columns("model" -> model)
   }
 
-  case class AirplaneModel(name: String, maxNbOfSeats: Int, maxSpeed: Double,
+  case class AirplaneModel(name: String, maxNbOfSeats: Int, cruiseSpeed: Double,
     manufacturer: Manufacturer) extends Entity {
-    val row = columns("maxNbOfSeats" -> maxNbOfSeats, "maxSpeed" -> maxSpeed,
+    val row = columns("maxNbOfSeats" -> maxNbOfSeats, "cruiseSpeed" -> cruiseSpeed,
       "manufacturer" -> manufacturer)
   }
 
