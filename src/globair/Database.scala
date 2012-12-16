@@ -197,7 +197,7 @@ trait FlightDSL extends DelayedInit {
   }
 
   implicit def pUnit(ps: Int) = new {
-    def p: Integer = ps
+    def p: Int = ps
   }
 
   private var flightTemplates: List[FlightTemplate] = Nil
