@@ -70,9 +70,9 @@ trait DBEntities {
   }
 
   case class Flight(template: FlightTemplate, date: Date, moment: FlightMoment,
-    airplane: Airplane) extends Entity {
+    airplaneModel: AirplaneModel) extends Entity {
     val row = columns("template" -> template, "date" -> date,
-      "moment" -> moment, "airplane" -> airplane)
+      "moment" -> moment, "airplaneModel" -> airplaneModel)
   }
 
   // TODO link with FlightTemplate?
@@ -80,11 +80,6 @@ trait DBEntities {
     time: Time) extends Entity {
     val row = columns("template" -> template, "weekday" -> weekday,
       "time" -> time)
-  }
-
-  // TODO id was code
-  case class Airplane(model: AirplaneModel) extends Entity {
-    val row = columns("model" -> model)
   }
 
   case class AirplaneModel(name: String, maxNbOfSeats: Int, cruiseSpeed: Double,
