@@ -6,6 +6,8 @@ import java.sql.PreparedStatement
 
 object DatabaseDSL {
 
+  import java.sql.Timestamp
+
   type ID = Int
 
   // class IDGenerator(start: ID = 0) {
@@ -18,25 +20,39 @@ object DatabaseDSL {
   // }
 
   // TODO temp
-  type Time = (Int, Int)
-
-  // TODO temp
-  type Date = Int
-
-  // TODO temp
-
   type Price = BigDecimal
 
-  sealed abstract class WeekDay(val ord: Int) extends IntField {
-      def rep = ord
+  abstract class SeatType
+
+  trait PricingScheme[Company, SeatType <: DatabaseDSL.SeatType] {
+
+    // Type alias
+    type PricingScheme = PartialFunction[(SeatType, Date, Price), Price]
+
+    val defaultScheme: PricingScheme = {
+      case (_, _, price) => price
+    }
+
+    implicit def andAlsoFunc(schemeA: PricingScheme) = new {
+      def andAlso(schemeB: PricingScheme): PricingScheme =
+        new PartialFunction[(SeatType, Date, Price), Price] {
+          def isDefinedAt(x: (SeatType, Date, Price)): Boolean =
+            schemeA.isDefinedAt(x) || schemeB.isDefinedAt(x)
+          def apply(x: (SeatType, Date, Price)): Price =
+              if (schemeA.isDefinedAt(x)) {
+                if (schemeB.isDefinedAt(x))
+                  schemeB.apply((x._1, x._2, schemeA.apply(x)))
+                else
+                  schemeA.apply(x)
+              } else {
+                schemeB.apply(x)
+              }
+        }
+    }
+
+    // Abstract, must be provided when defining a PricingScheme
+    val scheme: PricingScheme
   }
-  case object Monday extends WeekDay(0)
-  case object Tuesday extends WeekDay(1)
-  case object Wednesday extends WeekDay(2)
-  case object Thursday extends WeekDay(3)
-  case object Friday extends WeekDay(4)
-  case object Saturday extends WeekDay(5)
-  case object Sunday extends WeekDay(6)
 
   trait Field[T] {
     def rep: T
@@ -63,6 +79,11 @@ object DatabaseDSL {
       prepStat.setDouble(i, rep)
     }
   }
+  trait DateField extends Field[Timestamp] {
+    def fillIn(prepStat: PreparedStatement, i: Int) {
+      prepStat.setTimestamp(i, rep)
+    }
+  }
   trait Entity {
     def row: Map[String, Field[_]]
 
@@ -70,7 +91,8 @@ object DatabaseDSL {
     implicit def intField(n: Int) = new IntField { val rep = n }
     implicit def doubleField(d: Double) = new DoubleField { val rep = d }
     implicit def priceField(bd: Price) = new StringField { val rep = bd.toString } // TODO format
-    implicit def timeField(t: Time) = new IntField { val rep = t._1 * 60 + t._2 }
+    implicit def timeField(t: Time) = new IntField { val rep = t.minutes * 60 + t.hours }
+    implicit def dateField(d: Date) = new DateField { val rep = d.toTimestamp }
     implicit def foreignKeyField(e: Entity) = new IntField { val rep = e.id }
 
     protected def columns(cols: (String, Field[_])*): Map[String, Field[_]] = Map(cols: _*)

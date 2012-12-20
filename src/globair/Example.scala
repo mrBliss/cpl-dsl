@@ -39,11 +39,11 @@ object Example extends DB with FlightDSL {
   val Cessna = Manufacturer("Cessna")
 
   // Airline Companies (the code is the official IATA code)
-  val BM = company("BM", "British Midlands Airways")
-  val SN = company("SN", "SN Brussels Airlines")
-  val FR = company("FR", "Ryanair")
-  val QF = company("QF", "Qantas Airways")
-  val LH = company("LH", "Deutsche Lufthansa")
+  val BM = company("BM", "British Midlands Airways", BMPricing)
+  val SN = company("SN", "SN Brussels Airlines", null)
+  val FR = company("FR", "Ryanair", null)
+  val QF = company("QF", "Qantas Airways", null)
+  val LH = company("LH", "Deutsche Lufthansa", null)
 
   // Airplane Models
   val AirbusA320 = "Airbus A320" of Airbus carries 150.p flies 828.kmh
@@ -51,11 +51,50 @@ object Example extends DB with FlightDSL {
   val Boeing727 = "Boeing 727" of Boeing carries 145.p flies 963.kmh
   val Boeing737_800 = "Boeing 737-800" of Boeing carries 160.p flies 828.kmh
 
-  // Flights
-  FlightTemplate(BM, 1628)(BRU -> CDG, 757.km) {
-    at(9 h 55, every(Monday, Wednesday, Friday))
-    // by(Boeing727, Business -> 24, Economy, 123)
+  sealed abstract class BusEcSeatTypes extends SeatType
+  case object Business extends BusEcSeatTypes
+  case object Economy extends BusEcSeatTypes
+
+  sealed abstract class NumericalSeatTypes extends SeatType
+  case object FirstClass extends NumericalSeatTypes
+  case object SecondClass extends NumericalSeatTypes
+  case object ThirdClass extends NumericalSeatTypes
+
+  object SingleClass extends SeatType
+
+  val BMPricing = new PricingScheme[AirlineCompany, BusEcSeatTypes] {
+    import Date.dateSyntax
+
+    def isHighSeason(date: Date): Boolean =
+      date.in(15 December 2012, 31 March 2012) ||
+      date.in(1 July 2013, 31 August 2013) ||
+      date.in(15 December 2013, 31 March 2014)
+
+    val highSeason: PricingScheme = {
+      case (Business, date, price) if isHighSeason(date) => price * 1.1
+      case (Economy, date, price) if isHighSeason(date) => price * 1.05
+    }
+    val weekday: PricingScheme = {
+      case (_, _, price) => price * 0.9
+    }
+    val holidays: PricingScheme = {
+      // Christmas & Easter
+      case (_, Date(25, December, _) | Date(31, March, _), price) => price * 2
+      // Thanksgiving
+      case (_, Date(22, November, _), price) => price * 1.5
+      // Australia Day
+      case (_, Date(26, January, _), price) => price * 1.2
+    }
+    val scheme = holidays orElse (weekday andAlso highSeason) orElse defaultScheme
   }
+
+  // Flights
+  // FlightTemplate(BM, 1628)(BRU -> CDG, 757.km)(Boeing727) {
+  //   at(9 h 55, every(Monday))(Business -> (24, 300.EUR), Economy -> (123, 120.EUR)),
+  //   at(10 h 02, every(Friday))(Business -> 40, Economy -> 100),
+  //   on(24.December, ThanksGiving),
+  //   except(25.December, 6.January, Easter)
+  // }
 
 
 }

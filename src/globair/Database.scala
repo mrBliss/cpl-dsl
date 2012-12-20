@@ -115,7 +115,6 @@ class DB extends DBFields with DBEntities
 trait FlightDSL extends DelayedInit {
   self: DB =>
 
-  import DatabaseDSL.WeekDay
   import collection.mutable.ListBuffer
 
   private val initCode = new ListBuffer[() => Unit]
@@ -159,9 +158,11 @@ trait FlightDSL extends DelayedInit {
     }
   }
 
+  import globair.DatabaseDSL.PricingScheme
   // Airline Companies
   private var airlineCompanies: List[AirlineCompany] = Nil
-  def company(code: String, name: String): AirlineCompany = {
+  def company[SeatType <: DatabaseDSL.SeatType](code: String, name: String,
+              pricingScheme: PricingScheme[AirlineCompany, SeatType]): AirlineCompany = {
     val company = new AirlineCompany(AirlineCode(code), name)
     airlineCompanies ::= company
     company
