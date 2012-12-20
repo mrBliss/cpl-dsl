@@ -1,17 +1,31 @@
 package globair
 
 import DatabaseDSL.IntField
+import java.util.Calendar
 
 sealed abstract class WeekDay(val ord: Int) extends IntField {
     def rep = ord
 }
-case object Monday extends WeekDay(0)
-case object Tuesday extends WeekDay(1)
-case object Wednesday extends WeekDay(2)
-case object Thursday extends WeekDay(3)
-case object Friday extends WeekDay(4)
-case object Saturday extends WeekDay(5)
-case object Sunday extends WeekDay(6)
+case object Sunday extends WeekDay(1)
+case object Monday extends WeekDay(2)
+case object Tuesday extends WeekDay(3)
+case object Wednesday extends WeekDay(4)
+case object Thursday extends WeekDay(5)
+case object Friday extends WeekDay(6)
+case object Saturday extends WeekDay(7)
+
+object WeekDay {
+  private lazy val intToWeekDay = Map[Int, WeekDay] {
+    1 -> Sunday
+    2 -> Monday;
+    3 -> Tuesday
+    4 -> Wednesday;
+    5 -> Thursday;
+    6 -> Friday;
+    7 -> Saturday;
+  }
+  def apply(x: Int): WeekDay = intToWeekDay(x)
+}
 
 sealed abstract class Month(val ord: Int)
 case object January extends Month(1)
@@ -79,6 +93,9 @@ case class Date(day: Day, month: Month, year: Year) extends Ordered[Date] {
     strA compare strB
   }
 
+  // TODO switch  to scala-time
+  def +(days: Int): Date = null
+
   /**
    * d.in(startDate, endDate) == True iff startDate <= d && d <= endDate
    */
@@ -87,11 +104,36 @@ case class Date(day: Day, month: Month, year: Year) extends Ordered[Date] {
 
   override lazy val toString = "%04d/%02d/%02d" format(year, month, day)
 
+  private lazy val calendar = {
+    val cal = Calendar.getInstance()
+    cal.set(year, month.ord - 1, day)
+    cal
+  }
+
+  lazy val dayOfWeek: WeekDay = WeekDay(calendar.get(Calendar.DAY_OF_WEEK) + 1)
+  lazy val dayOfYear: Day = calendar.get(Calendar.DAY_OF_YEAR)
+
+  /**
+   * Return a Seq of Dates of all days that are a `weekDay` between
+   * `this` and `to` (both inclusive).
+   */
+  def weekDaysUntil(weekDay: WeekDay, to: Date): Seq[Date] = {
+    // the first multiple of 7 + weekDay.ord - 1 that > this.dayOfYear
+    var start = this
+    while (start.dayOfWeek != weekDay) {
+      start += 1
+    }
+    var day = start
+    var days: List[Date] = Nil
+    while (day <= to) {
+      days ::= day
+      day += 7
+    }
+    days
+  }
 
   import java.sql.Timestamp
-
   def toTimestamp: Timestamp = new Timestamp(year, month.ord, day, 0, 0, 0, 0)
-
 
 }
 

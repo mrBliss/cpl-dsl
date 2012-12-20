@@ -2,6 +2,7 @@ package globair
 
 object Example extends DB with FlightDSL {
   import DatabaseDSL._
+  import Date._
 
   // Countries
   val Belgium = country("Belgium")
@@ -62,9 +63,9 @@ object Example extends DB with FlightDSL {
 
   object SingleClass extends SeatType
 
-  val BMPricing = new PricingScheme[AirlineCompany, BusEcSeatTypes] {
-    import Date.dateSyntax
 
+
+  val BMPricing = new PricingScheme[AirlineCompany, BusEcSeatTypes] {
     def isHighSeason(date: Date): Boolean =
       date.in(15 December 2012, 31 March 2012) ||
       date.in(1 July 2013, 31 August 2013) ||
@@ -89,12 +90,22 @@ object Example extends DB with FlightDSL {
   }
 
   // Flights
-  // FlightTemplate(BM, 1628)(BRU -> CDG, 757.km)(Boeing727) {
-  //   at(9 h 55, every(Monday))(Business -> (24, 300.EUR), Economy -> (123, 120.EUR)),
-  //   at(10 h 02, every(Friday))(Business -> 40, Economy -> 100),
-  //   on(24.December, ThanksGiving),
-  //   except(25.December, 6.January, Easter)
-  // }
+
+  val wholeYear = (1 January 2012) -> (31 December 2012)
+  val summer = (21 June 2012) -> (21 September 2012)
+
+  FlightTemplate(BM, 1628)(BRU -> CDG, 757.km)(Boeing727) {
+    at(9 h 55, every(Monday) during wholeYear) {
+      Business -> 24.seats;
+      Economy -> 123.seats
+    }
+    // at(10 h 9, every(Friday)) {
+    //   Business -> (40, 450.EUR),
+    //   Economy -> (100, 230.EUR)
+    // } and
+    // at(15 h 3, 24 December 2012)
+    // except(25 December 2012, 6 January 2013)
+  }
 
 
 }

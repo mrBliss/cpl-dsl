@@ -167,9 +167,21 @@ trait FlightDSL extends DelayedInit {
   private var connections: List[Connection] = Nil
 
   // Flights
-  def every(weekDays: WeekDay*): Seq[WeekDay] = weekDays
+  implicit def dayRange(weekDay: WeekDay) = new {
+    def during(range: (Date, Date)): Seq[Date] =
+      range._1.weekDaysUntil(weekDay, range._2)
+  }
 
-  def at(time: (Int, Int), weekDays: Seq[WeekDay]) = (time._1, time._2, weekDays)
+  def every(weekDay: WeekDay): WeekDay = weekDay
+
+  def at[SeatType <: DatabaseDSL.SeatType](time: Time, dates: Seq[Date])
+                                          (seats: (SeatType, Int)*)
+    = (time, dates, Map(seats: _*))
+
+  def at[SeatType <: DatabaseDSL.SeatType](time: Time, date: Date)
+                                          (seats: (SeatType, Int)*)
+    = (time, List(date), Map(seats: _*))
+
 
   implicit def airplaneModelOf(airplaneModelName: String) = new {
     def of(company: Manufacturer) = new {
@@ -181,7 +193,7 @@ trait FlightDSL extends DelayedInit {
   }
 
   implicit def hourSyntax(hours: Int) = new {
-    def h(minutes: Int) = (hours, minutes)
+    def h(minutes: Int) = Time(hours, minutes)
   }
 
   implicit def kmUnit(kms: Int) = new {
@@ -196,11 +208,19 @@ trait FlightDSL extends DelayedInit {
     def p: Int = ps
   }
 
+  implicit def seatsSyntax(seats: Int) = new {
+    def seats: Int = seats
+  }
+
   private var flightTemplates: List[FlightTemplate] = Nil
-  def FlightTemplate(company: AirlineCompany, flightCode: Int)
-                    (fromTo: (Airport, Airport), distance: Double)
-                    (when: (Int, Int, Seq[WeekDay])): FlightTemplate = {
+  def FlightTemplate[SeatType <: DatabaseDSL.SeatType] (company: AirlineCompany, flightCode: Int)
+                                                       (fromTo: (Airport, Airport), distance: Double)
+                                                       (airplaneModel: AirplaneModel)
+                                                       (tup: (Time, Seq[Date], Map[SeatType, Int])): FlightTemplate = {
+    // TODO make the flights
+    // TODO check if total number of seats <= airplaneModel.maxNbOfSeats
     val (from, to) = fromTo
+    val (when, days, seats) = tup
     val conn = new Connection(from, to, distance)
     connections ::= conn
     val ft = new FlightTemplate(new FlightCodeNumber(flightCode), company, conn)
