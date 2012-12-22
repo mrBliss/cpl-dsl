@@ -154,6 +154,7 @@ trait FlightDSL extends DelayedInit {
   }
 
   import globair.DatabaseDSL.PricingScheme
+  
   // Airline Companies
   private var airlineCompanies: List[AirlineCompany] = Nil
   def company[SeatType <: DatabaseDSL.SeatType](code: String, name: String,
@@ -163,34 +164,53 @@ trait FlightDSL extends DelayedInit {
     company
   }
 
+  // Airplane Models
+  private var airplaneModels: List[AirplaneModel] = Nil
+  implicit def airplaneModelOf(airplaneModelName: String) = new {
+    def of(company: Manufacturer) = new {
+      def carries(passengers: Int) = new {
+        def flies(speed: Int): AirplaneModel = {
+          val model = new AirplaneModel(airplaneModelName, passengers, speed, company)
+          airplaneModels ::= model
+          model
+        }
+      }
+    }
+  }
+
+  implicit def pUnit(ps: Int) = new {
+    def p: Int = ps
+  }
+    
+  implicit def kmhUnit(kmhs: Int) = new {
+    def kmh: Int = kmhs
+  }
+
+
   // Connections
   private var connections: List[Connection] = Nil
 
   import org.joda.time.Interval
+  import globair.DatabaseDSL.Schedule
   
   // Flights
-  implicit def dayRange(weekDay: WeekDay) = new {
-    def during(interval: Interval): Seq[Date] = weekDay in interval
+  private var flightTemplates: List[FlightTemplate] = Nil
+  def FlightTemplate[SeatType <: DatabaseDSL.SeatType] (company: AirlineCompany, flightCode: Int)
+                                                       (fromTo: (Airport, Airport), distance: Double)
+                                                       (airplaneModel: AirplaneModel)
+                                                       (schedule: Schedule[SeatType]): FlightTemplate = {
+    // TODO make the flights
+    // TODO check if total number of seats <= airplaneModel.maxNbOfSeats
+    val (from, to) = fromTo
+    val conn = new Connection(from, to, distance)
+    connections ::= conn
+    val ft = new FlightTemplate(new FlightCodeNumber(flightCode), company, conn)
+    flightTemplates ::= ft
+    ft
   }
 
-  def every(weekDay: WeekDay): WeekDay = weekDay
-
-  def at[SeatType <: DatabaseDSL.SeatType](time: Time, dates: Seq[Date])
-                                          (seats: (SeatType, Int)*)
-    = (time, dates, Map(seats: _*))
-
-  def at[SeatType <: DatabaseDSL.SeatType](time: Time, date: Date)
-                                          (seats: (SeatType, Int)*)
-    = (time, List(date), Map(seats: _*))
-
-
-  implicit def airplaneModelOf(airplaneModelName: String) = new {
-    def of(company: Manufacturer) = new {
-      def carries(passengers: Int) = new {
-        def flies(speed: Int): AirplaneModel =
-          new AirplaneModel(airplaneModelName, passengers, speed, company)
-      }
-    }
+  implicit def dayRange(weekDay: WeekDay) = new {
+    def during(interval: Interval): Seq[Date] = weekDay in interval
   }
 
   implicit def hourSyntax(hours: Int) = new {
@@ -201,33 +221,11 @@ trait FlightDSL extends DelayedInit {
     def km: Double = kms
   }
 
-  implicit def kmhUnit(kmhs: Int) = new {
-    def kmh: Int = kmhs
-  }
-
-  implicit def pUnit(ps: Int) = new {
-    def p: Int = ps
-  }
-
   implicit def seatsSyntax(seats: Int) = new {
     def seats: Int = seats
   }
 
-  private var flightTemplates: List[FlightTemplate] = Nil
-  def FlightTemplate[SeatType <: DatabaseDSL.SeatType] (company: AirlineCompany, flightCode: Int)
-                                                       (fromTo: (Airport, Airport), distance: Double)
-                                                       (airplaneModel: AirplaneModel)
-                                                       (tup: (Time, Seq[Date], Map[SeatType, Int])): FlightTemplate = {
-    // TODO make the flights
-    // TODO check if total number of seats <= airplaneModel.maxNbOfSeats
-    val (from, to) = fromTo
-    val (when, days, seats) = tup
-    val conn = new Connection(from, to, distance)
-    connections ::= conn
-    val ft = new FlightTemplate(new FlightCodeNumber(flightCode), company, conn)
-    flightTemplates ::= ft
-    ft
-  }
+  def every(weekDay: WeekDay): WeekDay = weekDay
 }
 
 object Main extends App {

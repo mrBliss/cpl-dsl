@@ -52,19 +52,22 @@ object Example extends DB with FlightDSL {
   val Boeing727 = "Boeing 727" of Boeing carries 145.p flies 963.kmh
   val Boeing737_800 = "Boeing 737-800" of Boeing carries 160.p flies 828.kmh
 
+  // One kind of seats 
+  case object SingleClass extends SeatType
+  
+  // Two kinds of seats: Business and Economy
   sealed abstract class BusEcSeatTypes extends SeatType
   case object Business extends BusEcSeatTypes
   case object Economy extends BusEcSeatTypes
 
+  // Three kinds of seats: First, Second, and Third Class
   sealed abstract class NumericalSeatTypes extends SeatType
   case object FirstClass extends NumericalSeatTypes
   case object SecondClass extends NumericalSeatTypes
   case object ThirdClass extends NumericalSeatTypes
 
-  object SingleClass extends SeatType
 
-
-
+  // Pricing Scheme of British Midlands
   val BMPricing = new PricingScheme[AirlineCompany, BusEcSeatTypes] {
     def isHighSeason(date: Date): Boolean =
       date.in(15 December 2012, 31 March 2012) ||
@@ -95,16 +98,19 @@ object Example extends DB with FlightDSL {
   val summer = (21 June 2012) -> (21 September 2012)
 
   FlightTemplate(BM, 1628)(BRU -> CDG, 757.km)(Boeing727) {
-    at(9 h 55, every(Monday) during wholeYear) {
-      Business -> 24.seats;
-      Economy -> 123.seats
+    new Schedule[BusEcSeatTypes]()
+    .at(9 h 55, every(Monday) during wholeYear) {
+      Business -> 25.seats;
+      Economy -> 110.seats
     }
-    // at(10 h 9, every(Friday)) {
-    //   Business -> (40, 450.EUR),
-    //   Economy -> (100, 230.EUR)
-    // } and
-    // at(15 h 3, 24 December 2012)
-    // except(25 December 2012, 6 January 2013)
+    .at(10 h 9, every(Friday) during summer) {
+      Business -> 30.seats;
+      Economy -> 115.seats
+    }.except(25 December 2012, 6 January 2013)
+    .at(15 h 3, 24 December 2012) {
+      Business -> 20.seats;
+      Economy -> 125.seats
+    }
   }
 
 

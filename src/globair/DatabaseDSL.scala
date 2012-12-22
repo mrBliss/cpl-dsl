@@ -54,6 +54,20 @@ object DatabaseDSL {
     val scheme: PricingScheme
   }
 
+  class Schedule[SeatType <: DatabaseDSL.SeatType](schedule: Seq[(Time, Date, Map[SeatType, Int])] = Vector()) {
+    def at(time: Time, dates: Seq[Date])(seats: (SeatType, Int)*): Schedule[SeatType] = {
+      val seatMap = Map(seats:_*)
+      new Schedule(schedule ++ (dates map (date => (time, date, seatMap))))
+    }
+
+    def at(time: Time, date: Date)(seats: (SeatType, Int)*): Schedule[SeatType] =
+      new Schedule(schedule :+ (time, date, Map(seats:_*)))
+
+    def except(dates: Date*): Schedule[SeatType] =
+      new Schedule(schedule filterNot (x => dates contains x._2))
+  }
+
+
   trait Field[T] {
     def rep: T
     def fillIn(prepStat: PreparedStatement, i: Int): Unit
