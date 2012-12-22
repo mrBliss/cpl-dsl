@@ -1,10 +1,30 @@
 package globair
 
 import DatabaseDSL.IntField
-import java.util.Calendar
+import org.joda.time.{LocalDate, ReadablePeriod, Interval}
 
 sealed abstract class WeekDay(val ord: Int) extends IntField {
     def rep = ord
+
+  /**
+   * Return a Seq of Dates of all days that are this week day in the given
+   * range (start and end date included).
+   */
+  def in(interval: Interval): Seq[Date] = {
+    // the first multiple of 7 + weekDay.ord - 1 that > this.dayOfYear
+    var start = new Date(interval.getStart.toLocalDate)
+    val end = new Date(interval.getEnd.toLocalDate)
+    // Look for the first day after start that is this week day
+    while (start.dayOfWeek != this) start += 1.days
+    var day = start
+    val days = new collection.mutable.ListBuffer[Date]
+    while (day <= end) {
+      days += day
+      day += 7.days
+    }
+    days.toList
+  }
+  
 }
 case object Sunday extends WeekDay(1)
 case object Monday extends WeekDay(2)
@@ -24,7 +44,7 @@ object WeekDay {
     6 -> Friday;
     7 -> Saturday;
   }
-  def apply(x: Int): WeekDay = intToWeekDay(x)
+  def apply(x: Int): Option[WeekDay] = intToWeekDay get x
 }
 
 sealed abstract class Month(val ord: Int)
@@ -41,24 +61,31 @@ case object October extends Month(10)
 case object November extends Month(11)
 case object December extends Month(12)
 
+object Month {
+  private lazy val intToMonth = Map[Int, Month] {
+    1 -> January;
+    2 -> February;
+    3 -> March;
+    4 -> April;
+    5 -> May;
+    6 -> June;
+    7 -> July;
+    8 -> August;
+    9 -> September;
+    10 -> October;
+    11 -> November;
+    12 -> December;
+  }
+  def apply(x: Int): Option[Month] = intToMonth get x
+}
+
 object Date {
 
-  def isLeap(year: Year): Boolean =
-    if (year % 400 == 0) {
-      true
-    } else if (year % 100 == 0) {
-      false
-    } else if (year % 4 == 0) {
-      true
-    } else {
-      false
-    }
+  def apply(year: Year, month: Month, day: Day) =
+    new Date(new LocalDate(year, month.ord, day))
 
-  val daysPerMonth: Function[(Month, Year), Int] = {
-    case (February, year) => if (isLeap(year)) 29 else 28
-    case (April | June | September | November, _) => 30
-    case _ => 31
-  }
+  def unapply(date: Date): Option[(Day, Month, Year)] =
+    Some(date.day, date.month, date.year)
 
   implicit def dateSyntax(day: Int) = new {
     def January(year: Year): Date = Date(day, globair.January, year)
@@ -77,65 +104,36 @@ object Date {
 
 }
 
-case class Date(day: Day, month: Month, year: Year) extends Ordered[Date] {
-  require(year > 2000, "A year must be greater than 2000")
-  require(day > 0, "The day must be a positive number")
-  require(day <= Date.daysPerMonth(month, year), "Invalid day")
+class Date(val date: LocalDate) extends Ordered[Date] {
 
-  def compare(that: Date): Int = {
-    val Date(dayA, monthA, yearA) = this
-    val Date(dayB, monthB, yearB) = that
+  def day: Day = date.dayOfMonth.get
+  def month: Month = Month(date.monthOfYear.get).get // the last get cannot fail
+  def year: Year = date.year.get
 
-    // Easy way
-    val strA = "%04d%02d%02d" format(yearA, monthA, dayA)
-    val strB = "%04d%02d%02d" format(yearB, monthB, dayB)
+  def compare(that: Date): Int = this.date compareTo that.date
 
-    strA compare strB
-  }
+  def +(period: ReadablePeriod): Date = new Date(date plus period)
+  def -(period: ReadablePeriod): Date = new Date(date minus period)
 
-  // TODO switch  to scala-time
-  def +(days: Int): Date = null
+  def ->(endDate: Date): Interval =
+    new Interval(this.date.toDateTimeAtStartOfDay,
+                 endDate.date.toDateTimeAtStartOfDay)
 
-  /**
-   * d.in(startDate, endDate) == True iff startDate <= d && d <= endDate
-   */
-  def in(startDate: Date, endDate: Date): Boolean =
-    startDate <= this && this <= endDate
+  def in(interval: Interval) = interval.contains(date.toDateTimeAtStartOfDay)
 
-  override lazy val toString = "%04d/%02d/%02d" format(year, month, day)
+  def in(startDate: Date, endDate: Date): Boolean = in(startDate -> endDate)
 
-  private lazy val calendar = {
-    val cal = Calendar.getInstance()
-    cal.set(year, month.ord - 1, day)
-    cal
-  }
+  override lazy val toString = date.toString
+  
+  lazy val dayOfWeek: WeekDay = WeekDay(date.dayOfWeek.get).get
+  lazy val dayOfYear: Day = date.dayOfYear.get
 
-  lazy val dayOfWeek: WeekDay = WeekDay(calendar.get(Calendar.DAY_OF_WEEK) + 1)
-  lazy val dayOfYear: Day = calendar.get(Calendar.DAY_OF_YEAR)
-
-  /**
-   * Return a Seq of Dates of all days that are a `weekDay` between
-   * `this` and `to` (both inclusive).
-   */
-  def weekDaysUntil(weekDay: WeekDay, to: Date): Seq[Date] = {
-    // the first multiple of 7 + weekDay.ord - 1 that > this.dayOfYear
-    var start = this
-    while (start.dayOfWeek != weekDay) {
-      start += 1
-    }
-    var day = start
-    var days: List[Date] = Nil
-    while (day <= to) {
-      days ::= day
-      day += 7
-    }
-    days
-  }
 
   import java.sql.Timestamp
-  def toTimestamp: Timestamp = new Timestamp(year, month.ord, day, 0, 0, 0, 0)
+  def toTimestamp: Timestamp = new Timestamp(date.toDateTimeAtStartOfDay.getMillis)
 
 }
+
 
 case class Time(hours: Hours, minutes: Minutes) extends Ordered[Time] {
   require(0 <= hours && hours < 24, "Hours must be between 0 (inclusive) and 24 (exclusive)")

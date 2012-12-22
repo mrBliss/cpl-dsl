@@ -166,10 +166,11 @@ trait FlightDSL extends DelayedInit {
   // Connections
   private var connections: List[Connection] = Nil
 
+  import org.joda.time.Interval
+  
   // Flights
   implicit def dayRange(weekDay: WeekDay) = new {
-    def during(range: (Date, Date)): Seq[Date] =
-      range._1.weekDaysUntil(weekDay, range._2)
+    def during(interval: Interval): Seq[Date] = weekDay in interval
   }
 
   def every(weekDay: WeekDay): WeekDay = weekDay
