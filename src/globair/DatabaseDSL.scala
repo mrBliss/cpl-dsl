@@ -10,63 +10,8 @@ object DatabaseDSL {
 
   type ID = Int
 
-  // class IDGenerator(start: ID = 0) {
-  //   private var nextID = 0
-  //   def next(): ID = {
-  //     val id = nextID
-  //     nextID += 1
-  //     id
-  //   }
-  // }
-
   // TODO temp
   type Price = BigDecimal
-
-  abstract class SeatType
-
-  trait PricingScheme[Company, SeatType <: DatabaseDSL.SeatType] {
-
-    // Type alias
-    type PricingScheme = PartialFunction[(SeatType, Date, Price), Price]
-
-    val defaultScheme: PricingScheme = {
-      case (_, _, price) => price
-    }
-
-    implicit def andAlsoFunc(schemeA: PricingScheme) = new {
-      def andAlso(schemeB: PricingScheme): PricingScheme =
-        new PartialFunction[(SeatType, Date, Price), Price] {
-          def isDefinedAt(x: (SeatType, Date, Price)): Boolean =
-            schemeA.isDefinedAt(x) || schemeB.isDefinedAt(x)
-          def apply(x: (SeatType, Date, Price)): Price =
-              if (schemeA.isDefinedAt(x)) {
-                if (schemeB.isDefinedAt(x))
-                  schemeB.apply((x._1, x._2, schemeA.apply(x)))
-                else
-                  schemeA.apply(x)
-              } else {
-                schemeB.apply(x)
-              }
-        }
-    }
-
-    // Abstract, must be provided when defining a PricingScheme
-    val scheme: PricingScheme
-  }
-
-  class Schedule[SeatType <: DatabaseDSL.SeatType](schedule: Seq[(Time, Date, Map[SeatType, Int])] = Vector()) {
-    def at(time: Time, dates: Seq[Date])(seats: (SeatType, Int)*): Schedule[SeatType] = {
-      val seatMap = Map(seats:_*)
-      new Schedule(schedule ++ (dates map (date => (time, date, seatMap))))
-    }
-
-    def at(time: Time, date: Date)(seats: (SeatType, Int)*): Schedule[SeatType] =
-      new Schedule(schedule :+ (time, date, Map(seats:_*)))
-
-    def except(dates: Date*): Schedule[SeatType] =
-      new Schedule(schedule filterNot (x => dates contains x._2))
-  }
-
 
   trait Field[T] {
     def rep: T

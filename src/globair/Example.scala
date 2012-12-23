@@ -1,6 +1,6 @@
 package globair
 
-object Example extends DB with FlightDSL {
+object Example extends FlightDSL {
   import DatabaseDSL._
   import Date._
 
@@ -52,20 +52,19 @@ object Example extends DB with FlightDSL {
   val Boeing727 = "Boeing 727" of Boeing carries 145.p flies 963.kmh
   val Boeing737_800 = "Boeing 737-800" of Boeing carries 160.p flies 828.kmh
 
-  // One kind of seats 
-  case object SingleClass extends SeatType
-  
+  // One kind of seats
+  case object SingleClass extends SeatKind
+
   // Two kinds of seats: Business and Economy
-  sealed abstract class BusEcSeatTypes extends SeatType
+  sealed abstract class BusEcSeatTypes extends SeatKind
   case object Business extends BusEcSeatTypes
   case object Economy extends BusEcSeatTypes
 
   // Three kinds of seats: First, Second, and Third Class
-  sealed abstract class NumericalSeatTypes extends SeatType
+  sealed abstract class NumericalSeatTypes extends SeatKind
   case object FirstClass extends NumericalSeatTypes
   case object SecondClass extends NumericalSeatTypes
   case object ThirdClass extends NumericalSeatTypes
-
 
   // Pricing Scheme of British Midlands
   val BMPricing = new PricingScheme[AirlineCompany, BusEcSeatTypes] {
