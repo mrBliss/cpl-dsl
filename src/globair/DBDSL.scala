@@ -1,47 +1,53 @@
 
 package globair
 
-import java.sql.{Connection, DriverManager, PreparedStatement, Timestamp}
+import java.sql.{Connection, DriverManager, PreparedStatement, Statement, Timestamp}
+import collection.mutable.{Map => MutMap}
+
 
 object DBDSL {
 
   // TODO temp
   type Price = BigDecimal
 
-  // Input: the name of the column;
-  // Output: an sql statement that defines a column;
-  // e.g.: "name" => "`name` VARCHAR(100) NULL DEFAULT NULL"
-  type FieldGenerator = String => String
-
   trait Field[T] {
     def rep: T
-    def mkStatement(output: SQLOutputFormat): FieldGenerator
+    def fillIn(prepStat: PreparedStatement, i: Int)(implicit idMap: MutMap[Entity, ID]): Unit
     override def toString = rep.toString
   }
   trait IntField extends Field[Int] {
-    def mkStatement(output: SQLOutputFormat) = output.int
+    def fillIn(prepStat: PreparedStatement, i: Int)(implicit idMap: MutMap[Entity, ID]) =
+      prepStat.setInt(i, rep)
   }
   trait StringField extends Field[String] {
-    def mkStatement(output: SQLOutputFormat) = output.string()
+    def fillIn(prepStat: PreparedStatement, i: Int)(implicit idMap: MutMap[Entity, ID]) =
+      prepStat.setString(i, rep)
   }
   trait DoubleField extends Field[Double] {
-    def mkStatement(output: SQLOutputFormat) = output.double
+    def fillIn(prepStat: PreparedStatement, i: Int)(implicit idMap: MutMap[Entity, ID]) =
+      prepStat.setDouble(i, rep)
   }
-  trait DateTimeField extends Field[Timestamp] {
-    def mkStatement(output: SQLOutputFormat) = output.dateTime
+  trait TimestampField extends Field[Timestamp] {
+    def fillIn(prepStat: PreparedStatement, i: Int)(implicit idMap: MutMap[Entity, ID]) =
+      prepStat.setTimestamp(i, rep)
   }
   trait MoneyField extends Field[BigDecimal] {
-    def mkStatement(output: SQLOutputFormat) = output.money
+    def fillIn(prepStat: PreparedStatement, i: Int)(implicit idMap: MutMap[Entity, ID]) =
+      prepStat.setBigDecimal(i, rep.bigDecimal)
   }
   trait ForeignKeyField extends Field[Entity] {
-    def mkStatement(output: SQLOutputFormat) = output.foreignKey(rep)
+    def fillIn(prepStat: PreparedStatement, i: Int)(implicit idMap: MutMap[Entity, ID]) =
+      idMap get rep match {
+        case Some(id) => prepStat.setInt(i, id)
+        case None => stateError("No ID for entity " + rep)
+      }
   }
 
   implicit def intField(n: Int) = new IntField { val rep = n }
   implicit def stringField(str: String) = new StringField { val rep = str }
   implicit def doubleField(d: Double) = new DoubleField { val rep = d }
   implicit def moneyField(bd: Price) = new MoneyField { val rep = bd }
-  implicit def dateTimeField(d: DateTime) = new DateTimeField { val rep = d.toTimestamp }
+  implicit def dateTimeField(d: DateTime) = new TimestampField { val rep = d.toTimestamp }
   implicit def foreignKeyField(e: Entity): Field[_] = new ForeignKeyField { val rep = e }
 
 
@@ -57,6 +63,8 @@ object DBDSL {
   //   def rep = null
   //   def mkStatement(
   //   }, colName)
+
+  type ID = Int
 
   trait Entity {
 
@@ -76,19 +84,23 @@ object DBDSL {
     def key: Key[_]
 
     def tableName = this.getClass.getSimpleName
-    // def prepareStatement(conn: Connection): PreparedStatement = {
-    //   val cols = row
-    //   val prepStr = "INSERT INTO %s (%s) VALUES (%s)"
-    //     .format(tableName,
-    //             cols.map(_._1).mkString(", "),
-    //             cols.map(_ => "?").mkString(", "))
-    //   val stat = conn.prepareStatement(prepStr)
-    //   cols.zipWithIndex.foreach { case ((col, field), i) => field.fillIn(stat, i + 1) }
-    //   stat
-    // }
-    // def addToBatch(conn: Connection) {
-    //   prepareStatement(conn).executeUpdate()
-    // }
+    private def prepareStatement(conn: Connection)(implicit idMap: MutMap[Entity, ID]): PreparedStatement = {
+      "INSERT INTO %s (%s) VALUES (%s)"
+      val prepStr = "INSERT INTO %s (%s) VALUES (%s)"
+        .format(tableName,
+                row.map(_._1).mkString(", "),
+                row.map(_ => "?").mkString(", "))
+      println(prepStr)
+      val stat = conn.prepareStatement(prepStr, Statement.RETURN_GENERATED_KEYS)
+      row.zipWithIndex.foreach { case ((col, field), i) => field.fillIn(stat, i + 1) }
+      stat
+    }
+    def insert(conn: Connection)(implicit idMap: MutMap[Entity, ID]): Option[ID] = {
+      val stat = prepareStatement(conn)
+      stat.executeUpdate()
+      val genKeyResult = stat.getGeneratedKeys()
+      if (genKeyResult.next()) Some(genKeyResult.getInt(1)) else None
+    }
 
   }
 

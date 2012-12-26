@@ -3,18 +3,50 @@ package globair
 /**
  * Defines the infrastructure and operations of the DSL
  */
-trait FlightDSL extends DelayedInit with DBDefinition with SQLOutput {
-  self: SQLOutputFormat =>
+trait FlightDSL extends DelayedInit with DBDefinition {
 
-  import collection.mutable.ListBuffer
+  import DBDSL.{Entity, ID}
+  import collection.mutable.{ListBuffer, Map => MutMap}
+  import java.sql.{DriverManager, Connection => SQLConnection }
 
   private val initCode = new ListBuffer[() => Unit]
   override def delayedInit(body: => Unit) {
     initCode += (() => body)
   }
 
+  def populate[E <: Entity](entities: Seq[E])
+                           (implicit conn: SQLConnection,
+                            idMap: MutMap[Entity, ID]) {
+
+    entities foreach { entity =>
+      entity insert conn match {
+        case Some(id) => idMap += entity -> id
+        case None =>
+      }
+    }
+  }
+
   def run() {
     for (proc <- initCode) proc()
+
+
+    Class.forName("org.sqlite.JDBC");
+
+    implicit val conn = DriverManager.getConnection("jdbc:sqlite:test.db");
+    implicit val idMap: collection.mutable.Map[Entity, ID] = collection.mutable.Map()
+
+    // TODO syntax
+    populate(countries)
+    populate(cities)
+    populate(airports)
+    populate(airlineCompanies)
+    populate(manufacturers)
+    populate(airplaneModels)
+    populate(connections)
+
+    conn.close()
+
+    println(idMap)
 
     // createTable(Country)
     // println(countries)
@@ -29,50 +61,58 @@ trait FlightDSL extends DelayedInit with DBDefinition with SQLOutput {
   }
 
   // Countries
-  private var countries: List[Country] = Nil
+  private var countries: Vector[Country] = Vector()
   def country(name: String): Country = {
     val country = Country(name)
-    countries ::= country
+    countries :+= country
     country
   }
 
   // Cities
-  private var cities: List[City] = Nil
+  private var cities: Vector[City] = Vector()
   implicit def cityIn(cityName: String) = new {
     def in(country: Country) = {
       val city = new City(cityName, country)
-      cities ::= city
+      cities :+= city
       city
     }
   }
 
   // Airports
-  private var airports: List[Airport] = Nil
+  private var airports: Vector[Airport] = Vector()
   implicit def airportAt(pair: (String, String)) = new {
     def at(city: City): Airport = {
       val airport = new Airport(new AirportCode(pair._1), pair._2, city)
-      airports ::= airport
+      airports :+= airport
       airport
     }
   }
 
+  // Manufacturers
+  private var manufacturers: Vector[Manufacturer] = Vector()
+  def manufacturer(name: String): Manufacturer = {
+    val manufacturer = Manufacturer(name)
+    manufacturers :+= manufacturer
+    manufacturer
+  }
+
   // Airline Companies
-  private var airlineCompanies: List[AirlineCompany] = Nil
+  private var airlineCompanies: Vector[AirlineCompany] = Vector()
   def company[SeatType <: SeatKind](code: String, name: String,
               pricingScheme: PricingScheme[AirlineCompany, SeatType]): AirlineCompany = {
     val company = new AirlineCompany(AirlineCode(code), name)
-    airlineCompanies ::= company
+    airlineCompanies :+= company
     company
   }
 
   // Airplane Models
-  private var airplaneModels: List[AirplaneModel] = Nil
+  private var airplaneModels: Vector[AirplaneModel] = Vector()
   implicit def airplaneModelOf(airplaneModelName: String) = new {
     def of(company: Manufacturer) = new {
       def carries(passengers: Int) = new {
         def flies(speed: Int): AirplaneModel = {
           val model = new AirplaneModel(airplaneModelName, passengers, speed, company)
-          airplaneModels ::= model
+          airplaneModels :+= model
           model
         }
       }
@@ -88,7 +128,7 @@ trait FlightDSL extends DelayedInit with DBDefinition with SQLOutput {
   }
 
   // Connections
-  private var connections: List[Connection] = Nil
+  private var connections: Vector[Connection] = Vector()
 
   import org.joda.time.Interval
 
@@ -113,7 +153,7 @@ trait FlightDSL extends DelayedInit with DBDefinition with SQLOutput {
   def every(weekDay: WeekDay): WeekDay = weekDay
 
 
-  private var flightTemplates: List[FlightTemplate] = Nil
+  private var flightTemplates: Vector[FlightTemplate] = Vector()
   def FlightTemplate[SeatType <: SeatKind] (company: AirlineCompany, flightCode: Int)
                                                        (fromTo: (Airport, Airport), distance: Double)
                                                        (airplaneModel: AirplaneModel)
@@ -122,9 +162,9 @@ trait FlightDSL extends DelayedInit with DBDefinition with SQLOutput {
     // TODO check if total number of seats <= airplaneModel.maxNbOfSeats
     val (from, to) = fromTo
     val conn = new Connection(from, to, distance)
-    connections ::= conn
+    connections :+= conn
     val ft = new FlightTemplate(new FlightCodeNumber(flightCode.toString), company, conn)
-    flightTemplates ::= ft
+    flightTemplates :+= ft
     ft
   }
 

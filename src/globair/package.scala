@@ -9,6 +9,9 @@ package object globair {
   def argError(msg: String): Nothing =
     throw new IllegalArgumentException(msg)
 
+  def stateError(msg: String): Nothing =
+    throw new IllegalStateException(msg)
+
   type Year = Int
   type Day = Int
 

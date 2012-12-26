@@ -3,13 +3,9 @@ package globair
 /**
  * Example usage of the DSL
  */
-object Example extends FlightDSL with SQLiteFormat {
+object Example extends FlightDSL {
   import DBDSL._
   import Date._
-  import java.io.File
-
-  // Output file
-  val outputFile = new File("db.sql")
 
   // Countries
   val Belgium = country("Belgium")
@@ -42,9 +38,9 @@ object Example extends FlightDSL with SQLiteFormat {
   val JFK = ("JFK", "John F. Kennedy International Airport") at NewYork
 
   // Manufacturers
-  val Airbus = Manufacturer("Airbus")
-  val Boeing = Manufacturer("Boeing")
-  val Cessna = Manufacturer("Cessna")
+  val Airbus = manufacturer("Airbus")
+  val Boeing = manufacturer("Boeing")
+  val Cessna = manufacturer("Cessna")
 
   // Airline Companies (the code is the official IATA code)
   val BM = company("BM", "British Midlands Airways", BMPricing)
@@ -102,7 +98,7 @@ object Example extends FlightDSL with SQLiteFormat {
 
   val wholeYear = (1 January 2012) -> (31 December 2012)
   val summer = (21 June 2012) -> (21 September 2012)
-
+/*
   FlightTemplate(BM, 1628)(BRU -> CDG, 757.km)(Boeing727) {
     new Schedule[BusEcSeatTypes]()
     .at(9 h 55, every(Monday) during wholeYear) {
@@ -117,5 +113,5 @@ object Example extends FlightDSL with SQLiteFormat {
       Business -> 20.seats;
       Economy -> 125.seats
     }
-  }
+  }*/
 }

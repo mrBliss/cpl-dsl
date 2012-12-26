@@ -14,21 +14,18 @@ trait DBFields {
     require(code matches "[A-Z]{3}",
       "An airport code must consist of 3 capital letters")
     val rep = code
-    override def mkStatement(output: SQLOutputFormat) = output.string(3, "???")
   }
 
   case class AirlineCode(code: String) extends StringField {
     require(code matches "[A-Z]{2,3}",
       "An airline code must consist of 2 to 3 capital letters")
     val rep = code
-    override def mkStatement(output: SQLOutputFormat) = output.string(3, "???")
   }
 
   case class FlightCodeNumber(codeNumber: String) extends StringField {
     require(codeNumber matches "[0-9]{3,4}",
             "A flight code number must consist of 3 to 4 digits")
     val rep = codeNumber
-    override def mkStatement(output: SQLOutputFormat) = output.string(4, "????")
   }
 
   // Not stored in the database
@@ -50,6 +47,7 @@ trait DBEntities {
     val key = autoInc("id")
     val row = columns("name" -> name, "id_Country" -> country)
   }
+
 
   case class Airport(code: AirportCode, name: String, city: City)
     extends Entity {

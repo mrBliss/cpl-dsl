@@ -10,8 +10,8 @@ import DBDSL.IntField
 import org.joda.time.{LocalDate, ReadablePeriod, Interval, DateTime => JDateTime, LocalTime}
 
 sealed abstract class WeekDay(val ord: Int) extends IntField {
-    def rep = ord
-
+  def rep = ord
+  override def toString = this.getClass.getSimpleName.stripSuffix("$")
   /**
    * Return a Seq of Dates of all days that are this week day in the given
    * range (start and end date included).
@@ -41,16 +41,17 @@ case object Friday extends WeekDay(6)
 case object Saturday extends WeekDay(7)
 
 object WeekDay {
-  private lazy val intToWeekDay = Map[Int, WeekDay] {
-    1 -> Sunday
-    2 -> Monday;
-    3 -> Tuesday
-    4 -> Wednesday;
-    5 -> Thursday;
-    6 -> Friday;
-    7 -> Saturday;
-  }
+  private lazy val intToWeekDay = Map[Int, WeekDay](
+    1 -> Sunday,
+    2 -> Monday,
+    3 -> Tuesday,
+    4 -> Wednesday,
+    5 -> Thursday,
+    6 -> Friday,
+    7 -> Saturday
+  )
   def apply(x: Int): Option[WeekDay] = intToWeekDay get x
+
 }
 
 sealed abstract class Month(val ord: Int)
@@ -68,26 +69,26 @@ case object November extends Month(11)
 case object December extends Month(12)
 
 object Month {
-  private lazy val intToMonth = Map[Int, Month] {
-    1 -> January;
-    2 -> February;
-    3 -> March;
-    4 -> April;
-    5 -> May;
-    6 -> June;
-    7 -> July;
-    8 -> August;
-    9 -> September;
-    10 -> October;
-    11 -> November;
-    12 -> December;
-  }
+  private lazy val intToMonth = Map[Int, Month](
+    1 -> January,
+    2 -> February,
+    3 -> March,
+    4 -> April,
+    5 -> May,
+    6 -> June,
+    7 -> July,
+    8 -> August,
+    9 -> September,
+    10 -> October,
+    11 -> November,
+    12 -> December
+  )
   def apply(x: Int): Option[Month] = intToMonth get x
 }
 
 object Date {
 
-  def apply(year: Year, month: Month, day: Day) =
+  def apply(day: Day, month: Month, year: Year) =
     new Date(new LocalDate(year, month.ord, day))
 
   def unapply(date: Date): Option[(Day, Month, Year)] =
