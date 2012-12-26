@@ -3,7 +3,7 @@ package globair
 /**
  * Example usage of the DSL
  */
-object Example extends FlightDSL with SQLiteFormat{
+object Example extends FlightDSL with SQLiteFormat {
   import DBDSL._
   import Date._
   import java.io.File

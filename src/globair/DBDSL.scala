@@ -1,3 +1,4 @@
+
 package globair
 
 import java.sql.{Connection, DriverManager, PreparedStatement, Timestamp}
@@ -7,45 +8,42 @@ object DBDSL {
   // TODO temp
   type Price = BigDecimal
 
+  // Input: the name of the column;
+  // Output: an sql statement that defines a column;
+  // e.g.: "name" => "`name` VARCHAR(100) NULL DEFAULT NULL"
+  type FieldGenerator = String => String
+
   trait Field[T] {
     def rep: T
-    def fillIn(prepStat: PreparedStatement, i: Int): Unit
+    def mkStatement(output: SQLOutputFormat): FieldGenerator
     override def toString = rep.toString
   }
   trait IntField extends Field[Int] {
-    def fillIn(prepStat: PreparedStatement, i: Int) {
-      prepStat.setInt(i, rep)
-    }
-  }
-  trait BooleanField extends Field[Boolean] {
-    def fillIn(prepStat: PreparedStatement, i: Int) {
-      prepStat.setBoolean(i, rep)
-    }
+    def mkStatement(output: SQLOutputFormat) = output.int
   }
   trait StringField extends Field[String] {
-    def fillIn(prepStat: PreparedStatement, i: Int) {
-      prepStat.setString(i, rep)
-    }
+    def mkStatement(output: SQLOutputFormat) = output.string()
   }
   trait DoubleField extends Field[Double] {
-    def fillIn(prepStat: PreparedStatement, i: Int) {
-      prepStat.setDouble(i, rep)
-    }
+    def mkStatement(output: SQLOutputFormat) = output.double
   }
-  trait DateField extends Field[Timestamp] {
-    def fillIn(prepStat: PreparedStatement, i: Int) {
-      prepStat.setTimestamp(i, rep)
-    }
+  trait DateTimeField extends Field[Timestamp] {
+    def mkStatement(output: SQLOutputFormat) = output.dateTime
+  }
+  trait MoneyField extends Field[BigDecimal] {
+    def mkStatement(output: SQLOutputFormat) = output.money
+  }
+  trait ForeignKeyField extends Field[Entity] {
+    def mkStatement(output: SQLOutputFormat) = output.foreignKey(rep)
   }
 
   implicit def intField(n: Int) = new IntField { val rep = n }
-  implicit def booleanField(b: Boolean) = new BooleanField { val rep = b }
   implicit def stringField(str: String) = new StringField { val rep = str }
   implicit def doubleField(d: Double) = new DoubleField { val rep = d }
-  implicit def priceField(bd: Price) = new StringField { val rep = bd.toString } // TODO format
-  implicit def timeField(t: Time) = new IntField { val rep = t.minutes * 60 + t.hours }
-  implicit def dateField(d: Date) = new DateField { val rep = d.toTimestamp }
-  implicit def foreignKeyField(e: Entity): Field[_] = e.key.field
+  implicit def moneyField(bd: Price) = new MoneyField { val rep = bd }
+  implicit def dateTimeField(d: DateTime) = new DateTimeField { val rep = d.toTimestamp }
+  implicit def foreignKeyField(e: Entity): Field[_] = new ForeignKeyField { val rep = e }
+
 
   case class Key[F](val field: Field[F])
   class AutoIncKey(val name: String) extends Key[String](name)

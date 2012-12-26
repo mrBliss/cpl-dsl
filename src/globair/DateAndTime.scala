@@ -7,7 +7,7 @@ package globair
  */
 
 import DBDSL.IntField
-import org.joda.time.{LocalDate, ReadablePeriod, Interval}
+import org.joda.time.{LocalDate, ReadablePeriod, Interval, DateTime => JDateTime, LocalTime}
 
 sealed abstract class WeekDay(val ord: Int) extends IntField {
     def rep = ord
@@ -135,8 +135,7 @@ class Date(val date: LocalDate) extends Ordered[Date] {
   lazy val dayOfYear: Day = date.dayOfYear.get
 
 
-  import java.sql.Timestamp
-  def toTimestamp: Timestamp = new Timestamp(date.toDateTimeAtStartOfDay.getMillis)
+  def toDateTime(time: Time): DateTime = new DateTime(date.toDateTime(time.toLocalTime))
 
 }
 
@@ -148,6 +147,18 @@ case class Time(hours: Hours, minutes: Minutes) extends Ordered[Time] {
   def compare(that: Time): Int =
     (this.hours + this.minutes * 60) compare (that.hours + that.minutes * 60)
 
+  lazy val toLocalTime: LocalTime = new LocalTime(hours, minutes)
+
   override lazy val toString = "%02d:%02d" format(hours, minutes)
+
+}
+
+
+class DateTime(val dateTime: JDateTime) extends Ordered[DateTime] {
+
+  import java.sql.Timestamp
+  lazy val toTimestamp: Timestamp = new Timestamp(dateTime.getMillis)
+
+  def compare(that: DateTime): Int = this.dateTime compareTo that.dateTime
 
 }

@@ -123,7 +123,7 @@ trait FlightDSL extends DelayedInit with DBDefinition with SQLOutput {
     val (from, to) = fromTo
     val conn = new Connection(from, to, distance)
     connections ::= conn
-    val ft = new FlightTemplate(new FlightCodeNumber(flightCode), company, conn)
+    val ft = new FlightTemplate(new FlightCodeNumber(flightCode.toString), company, conn)
     flightTemplates ::= ft
     ft
   }

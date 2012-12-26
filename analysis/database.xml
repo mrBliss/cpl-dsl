@@ -154,7 +154,7 @@
 <datatype>INT</datatype>
 <default>NULL</default><relation table="FlightTemplate" row="id" />
 </row>
-<row name="time" null="0" autoincrement="0">
+<row name="dateTime" null="0" autoincrement="0">
 <datatype>DATETIME</datatype>
 <default>'NULL'</default></row>
 <row name="code_AirplaneModel" null="0" autoincrement="0">
