@@ -118,7 +118,7 @@ CREATE TABLE `Flight` (
   `id_FlightTemplate` INT NOT NULL DEFAULT NULL,
   `dateTime` DATETIME NOT NULL DEFAULT 'NULL',
   `code_AirplaneModel` INT NOT NULL DEFAULT NULL,
-  UNIQUE (`time`),
+  UNIQUE (`dateTime`),
   FOREIGN KEY (id_FlightTemplate) REFERENCES `FlightTemplate` (`id`),
   FOREIGN KEY (code_AirplaneModel) REFERENCES `AirplaneModel` (`id`)
 );
@@ -187,7 +187,7 @@ CREATE TABLE `SeatPricing` (
 -- ('','');
 -- INSERT INTO `SeatType` (`id`,`name`) VALUES
 -- ('','');
--- INSERT INTO `Flight` (`id`,`id_FlightTemplate`,`time`,`code_AirplaneModel`) VALUES
+-- INSERT INTO `Flight` (`id`,`id_FlightTemplate`,`dateTime`,`code_AirplaneModel`) VALUES
 -- ('','','','');
 -- INSERT INTO `AirplaneModel` (`id`,`name`,`cruiseSpeed`,`maxNbOfSeats`,`id_Manufacturer`) VALUES
 -- ('','','','','');
