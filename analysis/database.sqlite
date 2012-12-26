@@ -31,6 +31,7 @@ CREATE TABLE `Airport` (
   `code` VARCHAR(3) NOT NULL DEFAULT '???',
   `name` VARCHAR(100) NULL DEFAULT NULL,
   `id_City` INT NOT NULL DEFAULT NULL,
+  PRIMARY KEY (`code`),
   FOREIGN KEY (id_City) REFERENCES `City` (`id`)
 );
 
@@ -89,6 +90,7 @@ DROP TABLE IF EXISTS `AirlineCompany`;
 CREATE TABLE `AirlineCompany` (
   `code` VARCHAR(3) NOT NULL DEFAULT '???',
   `name` VARCHAR(100) NULL DEFAULT NULL,
+  PRIMARY KEY (`code`),
   FOREIGN KEY (code) REFERENCES `FlightTemplate` (`code_AirlineCompany`)
 );
 
