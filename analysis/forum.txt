@@ -1,0 +1,111 @@
+Q: Is the same aircraft used for every flight that does the same route at a
+certain time in a week, or do these flights only have the same aircraft type?
+So for the given example, the flight that departs every monday at 9:55 from
+Brussels to Edinburgh, is it done by the same aircraft (with a certain serial
+number) every time or is it just done by the same aircraft type every time?
+
+A: Certainly, for a given route it will not be the case that the exact same
+aircraft will service the route. Sometimes planes need to be serviced, so
+others will take their place. I don't think your system needs to keep track of
+individual planes.
+
+Generally, a route will be serviced by the same type of aircraft. But this
+will not always be the case. To make planning easier, an airline company will
+use the same type of plane (or same actual plane) for a given route for an
+extended period of time, but this will change over time.
+
+------------------------------------------------------------------------------
+
+
+Q: Do we need to take code-share flights into account? These are flights where
+two or more airline companies share the same physical plane, but both sell
+tickets on it. The actual flight is operated by one of the two airline
+companies, but the tickets can be sold by either and the flight has multiple
+codes, one for each airline company selling tickets for it.
+
+A: This factor can be ignored.
+
+------------------------------------------------------------------------------
+
+Q: Does the domain include any logic surrounding the pricing of airline
+tickets? As far as we can tell, the assignment is to populate a database with
+airline information, purely scheduling information. Does that include pricing?
+Because if it does, wouldn't the database constantly need to be changed
+because plane ticket prices change on a nearly weekly basis depending on the
+time of the year. Is it a good idea to assume that pricing is done by the
+airline itself when it is contacted about the pricings of a trip selected by
+someone using the database?
+
+A: Pricing information must also be included.
+
+The key to pricing is to introduce some kind of seat codes. Each seat has a
+code. Each code has a price. Then the airlines can assign different codes to
+flights at different times of the year. The airline can change the price
+associated with the codes.
+
+You can assume that these do NOT change dynamically after they have been
+specified. Thus all prices are predetermined in advance (say, for a year), but
+the airlines have the flexibility to specify how they want do specify the
+pricing. For most weeks, the prices will be the same. There may be some busy
+periods, and some non-busy periods. For those periods, the prices will change.
+
+Note that if you have designed an alternative approach that gives
+approximately the same amount of flexibility, then this is also okay.
+
+
+------------------------------------------------------------------------------
+
+Q: Ah, okay. That makes it a lot more clear. Does this means that booking
+information in the form of physical flights and how many seats are remaining
+on that flight must also be retained in the database?
+
+------------------------------------------------------------------------------
+
+Q: Should it be possible to overbook flights? Is it necessary to provide the
+possibilty to fetch prices "until the end of time" (i.e. suppose I (as a
+customer) want to ask for the price of a certain flight (ignoring any
+difference in seat type) in the year 10000)? If this is the case are those
+prices fixed or subject to change ? Furthermore we were wondering if every
+seat should have its own price or whether every seat type should have a price?
+
+A: You may safely ignore overbooking of flights.
+
+Flight details are only available one year in advance. Prices will be fixed
+for that period, but may change there after.
+
+Every seat should have a type. The type (and possibly other factors, such as
+time of year) determine the price. Essentially, you use seat type as a proxy
+for the price. A seat type will represent a group of seats and all seats in
+that group (for a given flight) will have the same price.
+
+------------------------------------------------------------------------------
+
+Q:
+
+* Are we populating the whole database in one go, or is the DSL used to
+  incrementally add new flights to the database, making use of data already
+  stored in the database? Take for instance the airports, cities, countries,
+  airplane models, etc., can we assume that they are already present in the
+  database, or should our DSL populate them too?
+
+* Are there any flights that recur on a basis other than a weekly one,like for
+  instance once every two weeks, only on December 24th, or every second
+  Thursday of the month, etc.?
+
+* Should we store the airplane model manufacturers too?
+
+------------------------------------------------------------------------------
+
+Q:
+
+* At the moment we included seat specific pricing information in our domain
+  model (and current syntax). Is it necessary to provide the possibility to
+  actually book seats?
+
+* Is it necessary to provide syntax for retrieving data from the database?
+
+* Should we develop an interactive console application (i.e. can we prompt the
+  user for additional information in case of ambiguous input ?) or a more
+  scripting like language (e.g. sql)?
+
+------------------------------------------------------------------------------
