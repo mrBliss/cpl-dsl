@@ -53,12 +53,12 @@ trait DBEntities {
 
   case class Airport(code: AirportCode, name: String, city: City)
     extends Entity {
-    val key = Key(code)
+    val key = useAsKey("code")
     val row = columns("code" -> code, "name" -> name, "id_City" -> city)
   }
 
   case class AirlineCompany(code: AirlineCode, name: String) extends Entity {
-    val key = Key(code)
+    val key = useAsKey("code")
     val row = columns("code" -> code, "name" -> name)
   }
 

@@ -45,15 +45,30 @@ object DBDSL {
   implicit def foreignKeyField(e: Entity): Field[_] = new ForeignKeyField { val rep = e }
 
 
-  case class Key[F](val field: Field[F])
-  class AutoIncKey(val name: String) extends Key[String](name)
+  // abstract class Key[F](val colName: String) extends Field[F]
+  // case class StringKey(colName: String) extends Key[String](colName) {
+  //   def rep: String =
+  //   def mkStatement(output: SQLOutputFormat) = output.
+  // }
+
+  // TODO
+  case class Key[F](val field: Field[F], val colName: String)
+  // class AutoIncKey(val colName: String) extends Key[Nothing](new Field[Nothing] {
+  //   def rep = null
+  //   def mkStatement(
+  //   }, colName)
 
   trait Entity {
 
     protected def columns(cols: (String, Field[_])*): Map[String, Field[_]] = Map(cols: _*)
 
-    protected def autoInc(keyName: String): Key[Int] = null
+    // TODO
+    protected def autoInc(keyName: String): Key[Nothing] = null
 
+    // TODO
+    protected def useAsKey(keyName: String): Key[String] = null
+
+    // TODO
     protected def unique(fields: String*): Unit = null
 
     def row: Map[String, Field[_]]

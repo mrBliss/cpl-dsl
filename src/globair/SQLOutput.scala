@@ -21,17 +21,17 @@ trait SQLOutput {
 
   // We just need one entity of the right type, it doesn't matter its
   // instance variables are.
-//   def generate[E <: Entity](entity: E): Unit = {
+  def generate[E <: Entity](entity: E): Unit = {
 
-//     "DROP TABLE IF EXISTS `%s`;\n\nCREATE TABLE `%s` (\n" +
-//     entity.row.map((k, v) =>
-// //   `id` INTEGER PRIMARY KEY,
-// //   `name` VARCHAR(100) NULL DEFAULT NULL,
-// //   `id_Country` INT NOT NULL DEFAULT NULL,
-// //   FOREIGN KEY (id_Country) REFERENCES `Country` (`id`)
-// // );
+    "DROP TABLE IF EXISTS `%s`;\n\nCREATE TABLE `%s` (\n" +
+    entity.row.map((k, v) =>
+//   `id` INTEGER PRIMARY KEY,
+//   `name` VARCHAR(100) NULL DEFAULT NULL,
+//   `id_Country` INT NOT NULL DEFAULT NULL,
+//   FOREIGN KEY (id_Country) REFERENCES `Country` (`id`)
+// );
 
-//   }
+  }
 
   def insert[E <: Entity](entities: Seq[E]): Unit = {
     // TODO
