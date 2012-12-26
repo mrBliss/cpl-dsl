@@ -1,8 +1,14 @@
 package globair
 
+/**
+ * Definition of the database tables
+ * DBFields: custom field types that can be used by the tables
+ * DBEntities: the database tables
+ */
+
 trait DBFields {
 
-  import DatabaseDSL._
+  import DBDSL._
 
   case class AirportCode(code: String) extends StringField {
     require(code matches "[A-Z]{3}",
@@ -32,75 +38,100 @@ trait DBFields {
 trait DBEntities {
   self: DBFields =>
 
-  import DatabaseDSL._
+  import DBDSL._
 
   case class Country(name: String) extends Entity {
-    def row = columns("name" -> name)
+    val key = autoInc("id")
+    val row = columns("name" -> name)
   }
 
   case class City(name: String, country: Country) extends Entity {
-    def row = columns("name" -> name, "country" -> country)
+    val key = autoInc("id")
+    val row = columns("name" -> name, "id_Country" -> country)
   }
 
   case class Airport(code: AirportCode, name: String, city: City)
     extends Entity {
-    def row = columns("code" -> code, "name" -> name, "city" -> city)
+    val key = Key(code)
+    val row = columns("code" -> code, "name" -> name, "id_City" -> city)
   }
 
   case class AirlineCompany(code: AirlineCode, name: String) extends Entity {
-    def row = columns("code" -> code, "name" -> name)
+    val key = Key(code)
+    val row = columns("code" -> code, "name" -> name)
   }
 
   case class Connection(from: Airport, to: Airport, distance: Double)
     extends Entity {
-    val row = columns("from" -> from, "to" -> to, "distance" -> distance)
+    val key = autoInc("id")
+    val row = columns("code_fromAirport" -> from, "code_toAirport" -> to, "distance" -> distance)
+    unique("code_fromAirport", "code_toAirport")
   }
 
-  case class SeatClass(name: String, company: AirlineCompany) extends Entity {
-    val row = columns("name" -> name, "company" -> company)
+  case class SeatType(name: String) extends Entity {
+    val key = autoInc("id")
+    val row = columns("name" -> name)
+  }
+  case class SeatPricing(seatType: SeatType, flight: Flight, price: Price, nbSeats: Int)
+       extends Entity {
+    val key = autoInc("id")
+    val row = columns("id_SeatType" -> seatType, "id_Flight" -> flight,
+                      "price" -> price, "nbSeats" -> nbSeats)
+    unique("id_SeatType", "id_Flight")
   }
 
-  case class Seat(flight: Flight, number: Int, seatClass: SeatClass)
-    extends Entity {
-    val row = columns("flight" -> flight, "number" -> number,
-      "seatClass" -> seatClass)
-  }
+  // case class Seat(flight: Flight, number: Int, seatClass: SeatClass)
+  //   extends Entity {
+  //   val row = columns("flight" -> flight, "number" -> number,
+  //     "seatClass" -> seatClass)
+  // }
 
-  case class Ticket(seat: Seat, price: Price) extends Entity {
-    val row = columns("seat" -> seat, "price" -> price)
-  }
+  // case class Ticket(seat: Seat, price: Price) extends Entity {
+  //   val row = columns("seat" -> seat, "price" -> price)
+  // }
 
-  case class Flight(template: FlightTemplate, date: Date, moment: FlightMoment,
+  // TODO DateTime
+  case class Flight(template: FlightTemplate, date: Date, time: Time,
     airplaneModel: AirplaneModel) extends Entity {
-    val row = columns("template" -> template, "date" -> date,
-      "moment" -> moment, "airplaneModel" -> airplaneModel)
+    val key = autoInc("id")
+    val row = columns("id_FlightTemplate" -> template, "time" -> date,
+                      "code_AirplaneModel" -> airplaneModel)
+    unique("time")
   }
 
-  // TODO link with FlightTemplate?
-  case class FlightMoment(template: FlightTemplate, weekday: WeekDay,
-    time: Time) extends Entity {
-    val row = columns("template" -> template, "weekday" -> weekday,
-      "time" -> time)
-  }
+  // // TODO link with FlightTemplate?
+  // case class FlightMoment(template: FlightTemplate, weekday: WeekDay,
+  //   time: Time) extends Entity {
+  //   val row = columns("template" -> template, "weekday" -> weekday,
+  //     "time" -> time)
+  // }
 
-  case class AirplaneModel(name: String, maxNbOfSeats: Int, cruiseSpeed: Double,
-    manufacturer: Manufacturer) extends Entity {
-    val row = columns("maxNbOfSeats" -> maxNbOfSeats, "cruiseSpeed" -> cruiseSpeed,
-      "manufacturer" -> manufacturer)
+  case class AirplaneModel(name: String, cruiseSpeed: Double, maxNbOfSeats: Int,
+                           manufacturer: Manufacturer) extends Entity {
+    val key = autoInc("id")
+    val row = columns("name" -> name, "cruiseSpeed" -> cruiseSpeed, "maxNbOfSeats" -> maxNbOfSeats,
+                      "id_Manufacturer" -> manufacturer)
   }
 
   case class Manufacturer(name: String) extends Entity {
+    val key = autoInc("id")
     val row = columns("name" -> name)
   }
 
-  case class FlightTemplate(codeNumber: FlightCodeNumber,
+  case class FlightTemplate(code: FlightCodeNumber,
     company: AirlineCompany, connection: Connection)
     extends Entity {
 
-    lazy val flightCode: FlightCode = new FlightCode(company.code, codeNumber)
+    lazy val flightCode: FlightCode = new FlightCode(company.code, code)
 
-    val row = columns("codeNumber" -> codeNumber, "company" -> company,
-      "connection" -> connection) // TODO
+    val key = autoInc("id")
+
+    val row = columns("code" -> code, "code_AirlineCompany" -> company,
+                      "id_Connection" -> connection)
+
+    unique("code", "code_AirlineCompany")
   }
 
 }
+
+trait DBDefinition extends DBFields with DBEntities

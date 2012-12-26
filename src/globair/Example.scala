@@ -1,8 +1,15 @@
 package globair
 
-object Example extends FlightDSL {
-  import DatabaseDSL._
+/**
+ * Example usage of the DSL
+ */
+object Example extends FlightDSL with SQLiteFormat{
+  import DBDSL._
   import Date._
+  import java.io.File
+
+  // Output file
+  val outputFile = new File("db.sql")
 
   // Countries
   val Belgium = country("Belgium")
@@ -111,6 +118,4 @@ object Example extends FlightDSL {
       Economy -> 125.seats
     }
   }
-
-
 }

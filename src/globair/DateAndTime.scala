@@ -1,6 +1,12 @@
 package globair
 
-import DatabaseDSL.IntField
+/**
+ * Auxiliary classes for times: WeekDay, Month, Date, Time
+ * Date is based on joda-time's LocalDate.
+ *
+ */
+
+import DBDSL.IntField
 import org.joda.time.{LocalDate, ReadablePeriod, Interval}
 
 sealed abstract class WeekDay(val ord: Int) extends IntField {
@@ -24,7 +30,7 @@ sealed abstract class WeekDay(val ord: Int) extends IntField {
     }
     days.toList
   }
-  
+
 }
 case object Sunday extends WeekDay(1)
 case object Monday extends WeekDay(2)
@@ -124,7 +130,7 @@ class Date(val date: LocalDate) extends Ordered[Date] {
   def in(startDate: Date, endDate: Date): Boolean = in(startDate -> endDate)
 
   override lazy val toString = date.toString
-  
+
   lazy val dayOfWeek: WeekDay = WeekDay(date.dayOfWeek.get).get
   lazy val dayOfYear: Day = date.dayOfYear.get
 

@@ -1,4 +1,14 @@
+/**
+ * Auxiliary types and implicits that don't have to be imported (in
+ * this package)
+ *
+ */
+
 package object globair {
+
+  def argError(msg: String): Nothing =
+    throw new IllegalArgumentException(msg)
+
   type Year = Int
   type Day = Int
 

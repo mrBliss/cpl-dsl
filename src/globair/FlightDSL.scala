@@ -1,6 +1,10 @@
 package globair
 
-trait FlightDSL extends DelayedInit with DBFields with DBEntities {
+/**
+ * Defines the infrastructure and operations of the DSL
+ */
+trait FlightDSL extends DelayedInit with DBDefinition with SQLOutput {
+  self: SQLOutputFormat =>
 
   import collection.mutable.ListBuffer
 
@@ -12,11 +16,16 @@ trait FlightDSL extends DelayedInit with DBFields with DBEntities {
   def run() {
     for (proc <- initCode) proc()
 
-    println(countries)
-    println(cities)
-    println(airports)
-    println(flightTemplates)
-    println("DONE")
+    // createTable(Country)
+    // println(countries)
+    // println(cities)
+    // println(airports)
+    // println(airlineCompanies)
+    // println(airplaneModels)
+    // println(connections)
+    // println(flightTemplates)
+    // // TODO pricing of seats
+    // println("DONE")
   }
 
   // Countries
@@ -121,7 +130,7 @@ trait FlightDSL extends DelayedInit with DBFields with DBEntities {
 
   abstract class SeatKind
 
-  import globair.DatabaseDSL.Price
+  import globair.DBDSL.Price
 
   trait PricingScheme[Company, SeatType <: SeatKind] {
 
