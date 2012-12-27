@@ -20,6 +20,9 @@ trait FlightDSL extends DelayedInit with DBDefinition {
 
   def run() {
     for (proc <- initCode) proc()
+
+    // Order matters! To populate entity A that keeps a link to entity
+    // B, entity B has to be populated first, because we need B's id for A.
     populate(dbName)(
       countries,
       cities,
@@ -28,9 +31,11 @@ trait FlightDSL extends DelayedInit with DBDefinition {
       manufacturers,
       airplaneModels,
       connections,
-      seatTypes
+      seatTypes,
+      flightTemplates,
+      flights,
+      seatPricings
     )
-    // seatPricings, flights, flightTemplates
   }
 
   // Countries
@@ -69,18 +74,9 @@ trait FlightDSL extends DelayedInit with DBDefinition {
     manufacturer
   }
 
-  // Airline Companies
-  private var airlineCompanies: Vector[AirlineCompany] = Vector()
-  def company[SeatType <: SeatKind](code: String, name: String,
-              pricingScheme: PricingScheme[AirlineCompany, SeatType]): AirlineCompany = {
-    val company = new AirlineCompany(AirlineCode(code), name)
-    airlineCompanies :+= company
-    company
-  }
-
   // Airplane Models
   private var airplaneModels: Vector[AirplaneModel] = Vector()
-  implicit def airplaneModelOf(airplaneModelName: String) = new {
+  implicit def airplaneModelOf(airplaneModelName: String) =  new {
     def of(company: Manufacturer) = new {
       def carries(passengers: Int) = new {
         def flies(speed: Int): AirplaneModel = {
@@ -99,6 +95,18 @@ trait FlightDSL extends DelayedInit with DBDefinition {
   implicit def kmhUnit(kmhs: Int) = new {
     def kmh: Int = kmhs
   }
+
+  // Airline Companies
+  private var airlineCompanies: Vector[AirlineCompany] = Vector()
+  private var pricingSchemes: Map[AirlineCompany, PricingScheme] = Map()
+  def company(code: String, name: String,
+              pricingScheme: => PricingScheme): AirlineCompany = {
+    val company = new AirlineCompany(AirlineCode(code), name)
+    airlineCompanies :+= company
+    pricingSchemes += (company -> (pricingScheme))
+    company
+  }
+
 
   // Connections
   private var connections: Vector[Connection] = Vector()
@@ -119,46 +127,70 @@ trait FlightDSL extends DelayedInit with DBDefinition {
     def km: Double = kms
   }
 
-  implicit def seatsSyntax(seats: Int) = new {
-    def seats: Int = seats
+  import DBDSL.Price
+  implicit def currenctySyntax(amount: Int) = new {
+    def EUR: Price = BigDecimal(amount)
+  }
+
+  implicit def seatsSyntax(nbOfSeats: Int) = new {
+    def seats = new {
+      def at(price: Price): (Int, Price) = (nbOfSeats, price)
+    }
   }
 
   def every(weekDay: WeekDay): WeekDay = weekDay
 
 
   private var flightTemplates: Vector[FlightTemplate] = Vector()
-  def FlightTemplate[SeatType <: SeatKind] (company: AirlineCompany, flightCode: Int)
-                                                       (fromTo: (Airport, Airport), distance: Double)
-                                                       (airplaneModel: AirplaneModel)
-                                                       (schedule: Schedule[SeatType]): FlightTemplate = {
-    // TODO make the flights
+  private var flights: Vector[Flight] = Vector()
+  private var seatPricings: Vector[SeatPricing] = Vector()
+  def FlightTemplate(company: AirlineCompany, flightCode: Int)
+                    (fromTo: (Airport, Airport), distance: Double)
+                    (airplaneModel: AirplaneModel)
+                    (schedule: Schedule): Unit = {
     // TODO check if total number of seats <= airplaneModel.maxNbOfSeats
     val (from, to) = fromTo
+
+    // Save the connection
     val conn = new Connection(from, to, distance)
     connections :+= conn
-    val ft = new FlightTemplate(new FlightCodeNumber(flightCode.toString), company, conn)
-    flightTemplates :+= ft
-    ft
+
+    // Save the FlightTemplate
+    val flightTemplate = new FlightTemplate(new FlightCodeNumber(flightCode.toString), company, conn)
+    flightTemplates :+= flightTemplate
+
+    // Flights
+    val newFlights: Seq[Flight] = schedule.schedule map(s => Flight(flightTemplate, s._1, airplaneModel))
+    flights ++= newFlights
+
+    // SeatPricings
+    val pricingScheme = pricingSchemes(company)
+    val newSeatPricings: Seq[SeatPricing] = for {
+      (flight, (dateTime, seating)) <- newFlights zip schedule.schedule
+      (seatType, (nbSeats, initPrice)) <- seating
+      price = pricingScheme(seatType, dateTime.toDate, initPrice)
+    } yield SeatPricing(seatType, flight, price, nbSeats)
+    seatPricings ++= newSeatPricings
   }
 
   // SeatTypes
   private var seatTypes: Vector[SeatType] = Vector()
-  abstract class SeatKind(name: String) {
-    val seatType: SeatType = {
-      val st = SeatType(name)
-      seatTypes :+= st
-      st
-    }
+  def seatType(name: String): SeatType = {
+    val st = SeatType(name)
+    seatTypes :+= st
+    st
   }
+
+
 
   import globair.DBDSL.Price
 
-  trait PricingScheme[Company, SeatType <: SeatKind] {
+  trait PricingScheme {
 
     // Type alias
     type PricingScheme = PartialFunction[(SeatType, Date, Price), Price]
 
-    val defaultScheme: PricingScheme = {
+    private val defaultScheme: PricingScheme = {
       case (_, _, price) => price
     }
 
@@ -179,21 +211,26 @@ trait FlightDSL extends DelayedInit with DBDefinition {
         }
     }
 
+    def apply(seatType: SeatType, date: Date, price: Price): Price = (scheme orElse defaultScheme)(seatType, date, price)
+
     // Abstract, must be provided when defining a PricingScheme
     val scheme: PricingScheme
+
   }
 
-  class Schedule[SeatType <: SeatKind](schedule: Seq[(Time, Date, Map[SeatType, Int])] = Vector()) {
-    def at(time: Time, dates: Seq[Date])(seats: (SeatType, Int)*): Schedule[SeatType] = {
+  class Schedule(val schedule: Seq[(DateTime, Map[SeatType, (Int, Price)])] = Vector()) {
+
+    def at(time: Time, dates: Seq[Date])(seats: (SeatType, (Int, Price))*): Schedule = {
       val seatMap = Map(seats:_*)
-      new Schedule(schedule ++ (dates map (date => (time, date, seatMap))))
+      new Schedule(schedule ++ (dates map (date => (date toDateTime time, seatMap))))
     }
 
-    def at(time: Time, date: Date)(seats: (SeatType, Int)*): Schedule[SeatType] =
-      new Schedule(schedule :+ (time, date, Map(seats:_*)))
+    def at(time: Time, date: Date)(seats: (SeatType, (Int, Price))*): Schedule =
+      new Schedule(schedule :+ (date toDateTime time, Map(seats:_*)))
 
-    def except(dates: Date*): Schedule[SeatType] =
-      new Schedule(schedule filterNot (x => dates contains x._2))
+    def except(dates: Date*): Schedule =
+      new Schedule(schedule filterNot { case (dateTime, _) => dates exists (dateTime sameDay _) })
+
   }
 
 

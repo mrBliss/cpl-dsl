@@ -45,13 +45,6 @@ object Example extends FlightDSL with SQLitePopulator {
   val Boeing = manufacturer("Boeing")
   val Cessna = manufacturer("Cessna")
 
-  // Airline Companies (the code is the official IATA code)
-  val BM = company("BM", "British Midlands Airways", BMPricing)
-  val SN = company("SN", "SN Brussels Airlines", null)
-  val FR = company("FR", "Ryanair", null)
-  val QF = company("QF", "Qantas Airways", null)
-  val LH = company("LH", "Deutsche Lufthansa", null)
-
   // Airplane Models
   val AirbusA320 = "Airbus A320" of Airbus carries 150.p flies 828.kmh
   val AirbusA380 = "Airbus A380" of Airbus carries 644.p flies 945.kmh
@@ -59,23 +52,22 @@ object Example extends FlightDSL with SQLitePopulator {
   val Boeing737_800 = "Boeing 737-800" of Boeing carries 160.p flies 828.kmh
 
   // One kind of seats
-  case object SingleClass extends SeatKind("Single Class")
+  val SingleClass = seatType("Single Class")
 
   // Two kinds of seats: Business and Economy
-  sealed abstract class BusEcSeatTypes(name: String) extends SeatKind(name)
-  case object Business extends BusEcSeatTypes("Business")
-  case object Economy extends BusEcSeatTypes("Economy")
+  val Business = seatType("Business")
+  val Economy = seatType("Economy")
 
   // Three kinds of seats: First, Second, and Third Class
-  sealed abstract class NumericalSeatTypes(name: String) extends SeatKind(name)
-  case object FirstClass extends NumericalSeatTypes("First Class")
-  case object SecondClass extends NumericalSeatTypes("Second Class")
-  case object ThirdClass extends NumericalSeatTypes("Third Class")
+  val FirstClass = seatType("First Class")
+  val SecondClass = seatType("Second Class")
+  val ThirdClass = seatType("Third Class")
 
-  // Pricing Scheme of British Midlands
-  val BMPricing = new PricingScheme[AirlineCompany, BusEcSeatTypes] {
+  // Airline Companies (the code is the official IATA code)
+  val BM = company("BM", "British Midlands Airways", new PricingScheme {
+
     def isHighSeason(date: Date): Boolean =
-      date.in(15 December 2012, 31 March 2012) ||
+      date.in(15 December 2012, 31 March 2013) ||
       date.in(1 July 2013, 31 August 2013) ||
       date.in(15 December 2013, 31 March 2014)
 
@@ -94,27 +86,38 @@ object Example extends FlightDSL with SQLitePopulator {
       // Australia Day
       case (_, Date(26, January, _), price) => price * 1.2
     }
-    val scheme = holidays orElse (weekday andAlso highSeason) orElse defaultScheme
-  }
+    val scheme = holidays orElse (weekday andAlso highSeason)
+  })
+
+  val SN = company("SN", "SN Brussels Airlines", null)
+  val FR = company("FR", "Ryanair", null)
+  val QF = company("QF", "Qantas Airways", null)
+  val LH = company("LH", "Deutsche Lufthansa", null)
+
 
   // Flights
 
   val wholeYear = (1 January 2012) -> (31 December 2012)
   val summer = (21 June 2012) -> (21 September 2012)
-/*
+
+  // TODO how do we define the default price, here, or in PricingScheme?
+  // Here: + directly linked to the flight + pretty
+  // PricingScheme: + not problems with overlap (e.g. Business @
+  //                  Christmas = 400 in the Schedule, but also * 2 in
+  //                  the PricingScheme)
+
   FlightTemplate(BM, 1628)(BRU -> CDG, 757.km)(Boeing727) {
-    new Schedule[BusEcSeatTypes]()
-    .at(9 h 55, every(Monday) during wholeYear) {
-      Business -> 25.seats;
-      Economy -> 110.seats
-    }
-    .at(10 h 9, every(Friday) during summer) {
-      Business -> 30.seats;
-      Economy -> 115.seats
+    new Schedule()
+      .at(9 h 55, every(Monday) during wholeYear) {
+      Business -> (25.seats at 250.EUR);
+      Economy -> (110.seats at 150.EUR)
+    }.at(10 h 9, every(Friday) during summer) {
+      Business -> (30.seats at 300.EUR);
+      Economy -> (115.seats at 200.EUR)
     }.except(25 December 2012, 6 January 2013)
-    .at(15 h 3, 24 December 2012) {
-      Business -> 20.seats;
-      Economy -> 125.seats
+      .at(15 h 3, 24 December 2012) {
+      Business -> (20.seats at 400.EUR);
+      Economy -> (125.seats at 300.EUR)
     }
-  }*/
+  }
 }

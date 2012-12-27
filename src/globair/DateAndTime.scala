@@ -174,4 +174,8 @@ class DateTime(val dateTime: JDateTime) extends Ordered[DateTime] {
 
   def compare(that: DateTime): Int = this.dateTime compareTo that.dateTime
 
+  def sameDay(date: Date): Boolean = dateTime.toLocalTime == date.date
+
+  lazy val toDate: Date = new Date(dateTime.toLocalDate)
+
 }
