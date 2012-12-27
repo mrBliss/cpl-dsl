@@ -27,8 +27,10 @@ trait FlightDSL extends DelayedInit with DBDefinition {
       airlineCompanies,
       manufacturers,
       airplaneModels,
-      connections
+      connections,
+      seatTypes
     )
+    // seatPricings, flights, flightTemplates
   }
 
   // Countries
@@ -139,7 +141,15 @@ trait FlightDSL extends DelayedInit with DBDefinition {
     ft
   }
 
-  abstract class SeatKind
+  // SeatTypes
+  private var seatTypes: Vector[SeatType] = Vector()
+  abstract class SeatKind(name: String) {
+    val seatType: SeatType = {
+      val st = SeatType(name)
+      seatTypes :+= st
+      st
+    }
+  }
 
   import globair.DBDSL.Price
 

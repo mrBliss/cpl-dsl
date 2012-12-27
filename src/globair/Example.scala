@@ -59,18 +59,18 @@ object Example extends FlightDSL with SQLitePopulator {
   val Boeing737_800 = "Boeing 737-800" of Boeing carries 160.p flies 828.kmh
 
   // One kind of seats
-  case object SingleClass extends SeatKind
+  case object SingleClass extends SeatKind("Single Class")
 
   // Two kinds of seats: Business and Economy
-  sealed abstract class BusEcSeatTypes extends SeatKind
-  case object Business extends BusEcSeatTypes
-  case object Economy extends BusEcSeatTypes
+  sealed abstract class BusEcSeatTypes(name: String) extends SeatKind(name)
+  case object Business extends BusEcSeatTypes("Business")
+  case object Economy extends BusEcSeatTypes("Economy")
 
   // Three kinds of seats: First, Second, and Third Class
-  sealed abstract class NumericalSeatTypes extends SeatKind
-  case object FirstClass extends NumericalSeatTypes
-  case object SecondClass extends NumericalSeatTypes
-  case object ThirdClass extends NumericalSeatTypes
+  sealed abstract class NumericalSeatTypes(name: String) extends SeatKind(name)
+  case object FirstClass extends NumericalSeatTypes("First Class")
+  case object SecondClass extends NumericalSeatTypes("Second Class")
+  case object ThirdClass extends NumericalSeatTypes("Third Class")
 
   // Pricing Scheme of British Midlands
   val BMPricing = new PricingScheme[AirlineCompany, BusEcSeatTypes] {
