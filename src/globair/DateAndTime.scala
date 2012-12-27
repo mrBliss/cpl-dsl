@@ -178,4 +178,6 @@ class DateTime(val dateTime: JDateTime) extends Ordered[DateTime] {
 
   lazy val toDate: Date = new Date(dateTime.toLocalDate)
 
+  // TODO toString
+
 }

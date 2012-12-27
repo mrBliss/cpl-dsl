@@ -48,7 +48,6 @@ trait DBEntities {
     val row = columns("name" -> name, "id_Country" -> country)
   }
 
-
   case class Airport(code: AirportCode, name: String, city: City)
     extends Entity {
     val key = useAsKey("code")
@@ -79,7 +78,6 @@ trait DBEntities {
                       "price" -> price, "nbSeats" -> nbSeats)
     unique("id_SeatType", "id_Flight")
   }
-
 
   case class Flight(template: FlightTemplate, dateTime: DateTime,
     airplaneModel: AirplaneModel) extends Entity {

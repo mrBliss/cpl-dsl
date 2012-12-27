@@ -9,38 +9,30 @@ object DBDSL {
   // TODO temp
   type Price = BigDecimal
 
+  type Prep = (PreparedStatement, Int, IDMap) => Unit
+
   trait Field[T] {
     def repr: T
-    // TODO find a way to remove idMap from this signature
-    def fillIn(prepStat: PreparedStatement, i: Int, idMap: IDMap): Unit
+    def prep(dataMapper: SQLDataTypeMapper): Prep
     override def toString = repr.toString
   }
   trait IntField extends Field[Int] {
-    def fillIn(prepStat: PreparedStatement, i: Int, idMap: IDMap) =
-      prepStat.setInt(i, repr)
+    def prep(dataMapper: SQLDataTypeMapper): Prep = dataMapper(repr) _
   }
   trait StringField extends Field[String] {
-    def fillIn(prepStat: PreparedStatement, i: Int, idMap: IDMap) =
-      prepStat.setString(i, repr)
+    def prep(dataMapper: SQLDataTypeMapper): Prep = dataMapper(repr) _
   }
   trait DoubleField extends Field[Double] {
-    def fillIn(prepStat: PreparedStatement, i: Int, idMap: IDMap) =
-      prepStat.setDouble(i, repr)
+    def prep(dataMapper: SQLDataTypeMapper): Prep = dataMapper(repr) _
   }
   trait TimestampField extends Field[Timestamp] {
-    def fillIn(prepStat: PreparedStatement, i: Int, idMap: IDMap) =
-      prepStat.setTimestamp(i, repr)
+    def prep(dataMapper: SQLDataTypeMapper): Prep = dataMapper(repr) _
   }
   trait MoneyField extends Field[BigDecimal] {
-    def fillIn(prepStat: PreparedStatement, i: Int, idMap: IDMap) =
-      prepStat.setBigDecimal(i, repr.bigDecimal)
+    def prep(dataMapper: SQLDataTypeMapper): Prep = dataMapper(repr) _
   }
   trait ForeignKeyField extends Field[Entity] {
-    def fillIn(prepStat: PreparedStatement, i: Int, idMap: IDMap) =
-      idMap get repr match {
-        case Some(id) => prepStat.setInt(i, id)
-        case None => stateError("No ID for entity " + repr)
-      }
+    def prep(dataMapper: SQLDataTypeMapper): Prep = dataMapper(repr) _
   }
 
   implicit def intField(n: Int) = new IntField { val repr = n }
@@ -86,7 +78,7 @@ object DBDSL {
     def key: Key[_]
 
     def tableName = this.getClass.getSimpleName
-    private def prepareStatement(conn: Connection, idMap: IDMap): PreparedStatement = {
+    private def prepareStatement(conn: Connection, dataTypeMapper: SQLDataTypeMapper, idMap: IDMap): PreparedStatement = {
       "INSERT INTO %s (%s) VALUES (%s)"
       val prepStr = "INSERT INTO %s (%s) VALUES (%s)"
         .format(tableName,
@@ -94,11 +86,11 @@ object DBDSL {
                 row.map(_ => "?").mkString(", "))
       println(prepStr)
       val stat = conn.prepareStatement(prepStr, Statement.RETURN_GENERATED_KEYS)
-      row.zipWithIndex.foreach { case ((col, field), i) => field.fillIn(stat, i + 1, idMap) }
+      row.zipWithIndex.foreach { case ((col, field), i) => field.prep(dataTypeMapper)(stat, i + 1, idMap) }
       stat
     }
-    def insert(conn: Connection, idMap: IDMap): Option[ID] = {
-      val stat = prepareStatement(conn, idMap)
+    def insert(conn: Connection, dataTypeMapper: SQLDataTypeMapper, idMap: IDMap): Option[ID] = {
+      val stat = prepareStatement(conn, dataTypeMapper, idMap)
       stat.executeUpdate()
       val genKeyResult = stat.getGeneratedKeys()
       if (genKeyResult.next()) Some(genKeyResult.getInt(1)) else None

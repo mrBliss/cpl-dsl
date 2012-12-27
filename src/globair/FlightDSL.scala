@@ -36,6 +36,7 @@ trait FlightDSL extends DelayedInit with DBDefinition {
       flights,
       seatPricings
     )
+    // TODO it's quite slow (due to printing?)
   }
 
   // Countries
