@@ -10,7 +10,7 @@ import DBDSL.IntField
 import org.joda.time.{LocalDate, ReadablePeriod, Interval, DateTime => JDateTime, LocalTime}
 
 sealed abstract class WeekDay(val ord: Int) extends IntField {
-  def rep = ord
+  def repr = ord
   override def toString = this.getClass.getSimpleName.stripSuffix("$")
   /**
    * Return a Seq of Dates of all days that are this week day in the given

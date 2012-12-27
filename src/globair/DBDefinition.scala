@@ -13,19 +13,19 @@ trait DBFields {
   case class AirportCode(code: String) extends StringField {
     require(code matches "[A-Z]{3}",
       "An airport code must consist of 3 capital letters")
-    val rep = code
+    val repr = code
   }
 
   case class AirlineCode(code: String) extends StringField {
     require(code matches "[A-Z]{2,3}",
       "An airline code must consist of 2 to 3 capital letters")
-    val rep = code
+    val repr = code
   }
 
   case class FlightCodeNumber(codeNumber: String) extends StringField {
     require(codeNumber matches "[0-9]{3,4}",
             "A flight code number must consist of 3 to 4 digits")
-    val rep = codeNumber
+    val repr = codeNumber
   }
 
   // Not stored in the database

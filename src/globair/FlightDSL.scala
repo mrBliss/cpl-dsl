@@ -4,60 +4,31 @@ package globair
  * Defines the infrastructure and operations of the DSL
  */
 trait FlightDSL extends DelayedInit with DBDefinition {
+  self: SQLPopulator =>
 
-  import DBDSL.{Entity, ID}
-  import collection.mutable.{ListBuffer, Map => MutMap}
-  import java.sql.{DriverManager, Connection => SQLConnection }
+  // A JDBC String that identifies the database, e.g.
+  // "jdbc:sqlite:test.db", must be provided by implementers of this
+  // trait.
+  def dbName: String
+
+  import collection.mutable.ListBuffer
 
   private val initCode = new ListBuffer[() => Unit]
   override def delayedInit(body: => Unit) {
     initCode += (() => body)
   }
 
-  def populate[E <: Entity](entities: Seq[E])
-                           (implicit conn: SQLConnection,
-                            idMap: MutMap[Entity, ID]) {
-
-    entities foreach { entity =>
-      entity insert conn match {
-        case Some(id) => idMap += entity -> id
-        case None =>
-      }
-    }
-  }
-
   def run() {
     for (proc <- initCode) proc()
-
-
-    Class.forName("org.sqlite.JDBC");
-
-    implicit val conn = DriverManager.getConnection("jdbc:sqlite:test.db");
-    implicit val idMap: collection.mutable.Map[Entity, ID] = collection.mutable.Map()
-
-    // TODO syntax
-    populate(countries)
-    populate(cities)
-    populate(airports)
-    populate(airlineCompanies)
-    populate(manufacturers)
-    populate(airplaneModels)
-    populate(connections)
-
-    conn.close()
-
-    println(idMap)
-
-    // createTable(Country)
-    // println(countries)
-    // println(cities)
-    // println(airports)
-    // println(airlineCompanies)
-    // println(airplaneModels)
-    // println(connections)
-    // println(flightTemplates)
-    // // TODO pricing of seats
-    // println("DONE")
+    populate(dbName)(
+      countries,
+      cities,
+      airports,
+      airlineCompanies,
+      manufacturers,
+      airplaneModels,
+      connections
+    )
   }
 
   // Countries

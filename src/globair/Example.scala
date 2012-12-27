@@ -3,9 +3,10 @@ package globair
 /**
  * Example usage of the DSL
  */
-object Example extends FlightDSL {
-  import DBDSL._
+object Example extends FlightDSL with SQLitePopulator {
   import Date._
+
+  val dbName = "jdbc:sqlite:test.db"
 
   // Countries
   val Belgium = country("Belgium")
