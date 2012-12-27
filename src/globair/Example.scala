@@ -5,6 +5,8 @@ package globair
  */
 object Example extends FlightDSL with SQLitePopulator {
   import Date._
+  import Month._
+  import WeekDay._
 
   val dbName = "jdbc:sqlite:test.db"
 

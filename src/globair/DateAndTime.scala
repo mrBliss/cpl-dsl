@@ -32,41 +32,30 @@ sealed abstract class WeekDay(val ord: Int) extends IntField {
   }
 
 }
-case object Sunday extends WeekDay(1)
-case object Monday extends WeekDay(2)
-case object Tuesday extends WeekDay(3)
-case object Wednesday extends WeekDay(4)
-case object Thursday extends WeekDay(5)
-case object Friday extends WeekDay(6)
-case object Saturday extends WeekDay(7)
 
 object WeekDay {
   private lazy val intToWeekDay = Map[Int, WeekDay](
-    1 -> Sunday,
-    2 -> Monday,
-    3 -> Tuesday,
-    4 -> Wednesday,
-    5 -> Thursday,
-    6 -> Friday,
-    7 -> Saturday
+    1 -> Monday,
+    2 -> Tuesday,
+    3 -> Wednesday,
+    4 -> Thursday,
+    5 -> Friday,
+    6 -> Saturday,
+    7 -> Sunday
   )
   def apply(x: Int): Option[WeekDay] = intToWeekDay get x
+
+  case object Monday extends WeekDay(1)
+  case object Tuesday extends WeekDay(2)
+  case object Wednesday extends WeekDay(3)
+  case object Thursday extends WeekDay(4)
+  case object Friday extends WeekDay(5)
+  case object Saturday extends WeekDay(6)
+  case object Sunday extends WeekDay(7)
 
 }
 
 sealed abstract class Month(val ord: Int)
-case object January extends Month(1)
-case object February extends Month(2)
-case object March extends Month(3)
-case object April extends Month(4)
-case object May extends Month(5)
-case object June extends Month(6)
-case object July extends Month(7)
-case object August extends Month(8)
-case object September extends Month(9)
-case object October extends Month(10)
-case object November extends Month(11)
-case object December extends Month(12)
 
 object Month {
   private lazy val intToMonth = Map[Int, Month](
@@ -84,6 +73,20 @@ object Month {
     12 -> December
   )
   def apply(x: Int): Option[Month] = intToMonth get x
+
+  case object January extends Month(1)
+  case object February extends Month(2)
+  case object March extends Month(3)
+  case object April extends Month(4)
+  case object May extends Month(5)
+  case object June extends Month(6)
+  case object July extends Month(7)
+  case object August extends Month(8)
+  case object September extends Month(9)
+  case object October extends Month(10)
+  case object November extends Month(11)
+  case object December extends Month(12)
+
 }
 
 object Date {
@@ -95,18 +98,18 @@ object Date {
     Some(date.day, date.month, date.year)
 
   implicit def dateSyntax(day: Int) = new {
-    def January(year: Year): Date = Date(day, globair.January, year)
-    def February(year: Year): Date = Date(day, globair.February, year)
-    def March(year: Year): Date = Date(day, globair.March, year)
-    def April(year: Year): Date = Date(day, globair.April, year)
-    def May(year: Year): Date = Date(day, globair.May, year)
-    def June(year: Year): Date = Date(day, globair.June, year)
-    def July(year: Year): Date = Date(day, globair.July, year)
-    def August(year: Year): Date = Date(day, globair.August, year)
-    def September(year: Year): Date = Date(day, globair.September, year)
-    def October(year: Year): Date = Date(day, globair.October, year)
-    def November(year: Year): Date = Date(day, globair.November, year)
-    def December(year: Year): Date = Date(day, globair.December, year)
+    def January(year: Year): Date = Date(day, globair.Month.January, year)
+    def February(year: Year): Date = Date(day, globair.Month.February, year)
+    def March(year: Year): Date = Date(day, globair.Month.March, year)
+    def April(year: Year): Date = Date(day, globair.Month.April, year)
+    def May(year: Year): Date = Date(day, globair.Month.May, year)
+    def June(year: Year): Date = Date(day, globair.Month.June, year)
+    def July(year: Year): Date = Date(day, globair.Month.July, year)
+    def August(year: Year): Date = Date(day, globair.Month.August, year)
+    def September(year: Year): Date = Date(day, globair.Month.September, year)
+    def October(year: Year): Date = Date(day, globair.Month.October, year)
+    def November(year: Year): Date = Date(day, globair.Month.November, year)
+    def December(year: Year): Date = Date(day, globair.Month.December, year)
   }
 
 }
@@ -124,9 +127,9 @@ class Date(val date: LocalDate) extends Ordered[Date] {
 
   def ->(endDate: Date): Interval =
     new Interval(this.date.toDateTimeAtStartOfDay,
-                 endDate.date.toDateTimeAtStartOfDay)
+                 (endDate + 1.days).date.toDateTimeAtStartOfDay)
 
-  def in(interval: Interval) = interval.contains(date.toDateTimeAtStartOfDay)
+  def in(interval: Interval): Boolean = interval.contains(date.toDateTimeAtStartOfDay)
 
   def in(startDate: Date, endDate: Date): Boolean = in(startDate -> endDate)
 
@@ -138,6 +141,15 @@ class Date(val date: LocalDate) extends Ordered[Date] {
 
   def toDateTime(time: Time): DateTime = new DateTime(date.toDateTime(time.toLocalTime))
 
+
+  def canEqual(other: Any): Boolean = other.isInstanceOf[Date]
+
+  override def equals(other: Any): Boolean = other match {
+    case that: Date => (that canEqual this) && this.date == that.date
+    case _ => false
+  }
+
+  override def hashCode: Int = 41 * date.hashCode
 }
 
 

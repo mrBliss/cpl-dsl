@@ -1,4 +1,4 @@
-MAIN = globair.DB
+MAIN = globair.Main
 
 compile:
 	mvn compile
@@ -12,4 +12,7 @@ jar:
 clean:
 	mvn clean
 
-.PHONY: run jar clean
+test:
+	mvn scalatest:test
+
+.PHONY: run jar clean test
