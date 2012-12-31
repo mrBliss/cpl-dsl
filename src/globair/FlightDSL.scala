@@ -149,7 +149,14 @@ trait FlightDSL extends DelayedInit with DBDefinition {
                     (fromTo: (Airport, Airport), distance: Double)
                     (airplaneModel: AirplaneModel)
                     (schedule: Schedule): Unit = {
-    // TODO check if total number of seats <= airplaneModel.maxNbOfSeats
+
+    // Check if total number of seats <= airplaneModel.maxNbOfSeats
+    schedule.schedule.map(_._2) foreach { m =>
+      val totalNbSeats = m.values.map(_._2).sum
+      if (totalNbSeats > airplaneModel.maxNbOfSeats)
+        argError("%s cannot carry %d passengers" format(airplaneModel, totalNbSeats))
+    }
+
     val (from, to) = fromTo
 
     // Save the connection
