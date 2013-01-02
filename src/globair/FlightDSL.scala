@@ -181,6 +181,9 @@ trait FlightDSL extends DelayedInit with DBDefinition {
 
     // Flights
     val newFlights: Seq[Flight] = schedule.schedule map(s => Flight(flightTemplate, s._1, airplaneModel))
+    if (newFlights.isEmpty)
+      argError("Flight template generates zero flights")
+
     flights ++= newFlights
 
     // SeatPricings
