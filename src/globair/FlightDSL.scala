@@ -134,6 +134,21 @@ trait FlightDSL extends DelayedInit with DBDefinition {
     def km: Double = kms
   }
 
+  implicit def weekDayRange(start: WeekDay) = new {
+    // Tuesday -> Friday = List(Tuesday, Wednesday, Thursday, Friday)
+    // Friday -> Tuesday = List(Friday, Saturday, Sunday, Monday, Tuesday)
+    def ->(end: WeekDay): Seq[WeekDay] = {
+      var range: Seq[WeekDay] = Vector()
+      var weekDay = start
+      while (weekDay < end) {
+        range :+= weekDay
+        weekDay = weekDay.next
+      }
+      range
+    }
+  }
+
+
   import DBDSL.Price
   implicit def currenctySyntax(amount: Int) = new {
     def EUR: Price = BigDecimal(amount)

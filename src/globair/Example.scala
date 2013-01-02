@@ -107,6 +107,8 @@ object Example extends FlightDSL with MySQLPopulator {
   val wholeYear = (1 January 2012) -> (31 December 2012)
   val summer = (21 June 2012) -> (21 September 2012)
 
+  val wholeWeek = Monday -> Sunday
+
   // British Midlands
   FlightTemplate(BM, 1628)(BRU -> CDG, 757.km)(Boeing727) {
     new Schedule()
@@ -135,7 +137,7 @@ object Example extends FlightDSL with MySQLPopulator {
   // SN Brussels Airlines
   FlightTemplate(SN, 324)(BRU -> CIA, 1187.km)(AirbusA380) {
     new Schedule()
-      .at(21 h 40, every(Tuesday, Thursday) during summer) {
+      .at(21 h 40, wholeWeek during summer) {
       FirstClass -> (42.seats at 600.EUR);
       SecondClass -> (102.seats at 325.EUR)
       ThirdClass -> (500.seats at 287.EUR)

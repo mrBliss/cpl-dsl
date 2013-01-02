@@ -9,7 +9,7 @@ package globair
 import DBDSL.IntField
 import org.joda.time.{LocalDate, ReadablePeriod, Interval, DateTime => JDateTime, LocalTime}
 
-sealed abstract class WeekDay(val ord: Int) extends IntField {
+sealed abstract class WeekDay(val ord: Int) extends IntField with Ordered[WeekDay] {
   def repr = ord
   override def toString = this.getClass.getSimpleName.stripSuffix("$")
   /**
@@ -30,6 +30,15 @@ sealed abstract class WeekDay(val ord: Int) extends IntField {
     }
     days.toList
   }
+
+  import WeekDay.Monday
+
+  def next: WeekDay = WeekDay(this.ord + 1) match {
+      case Some(weekDay) => weekDay
+      case None => Monday
+    }
+
+  def compare(that: WeekDay): Int = this.ord compareTo that.ord
 
 }
 
