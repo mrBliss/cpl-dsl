@@ -75,18 +75,8 @@ object Example extends FlightDSL with SQLitePopulator {
       case (Business, date, price) if isHighSeason(date) => price * 1.1
       case (Economy, date, price) if isHighSeason(date) => price * 1.05
     }
-    val weekday: PricingScheme = {
-      case (_, _, price) => price * 0.9
-    }
-    val holidays: PricingScheme = {
-      // Christmas & Easter
-      case (_, Date(25, December, _) | Date(31, March, _), price) => price * 2
-      // Thanksgiving
-      case (_, Date(22, November, _), price) => price * 1.5
-      // Australia Day
-      case (_, Date(26, January, _), price) => price * 1.2
-    }
-    val scheme = holidays orElse (weekday andAlso highSeason)
+
+    val scheme = highSeason
   })
 
   val SN = company("SN", "SN Brussels Airlines", null)
@@ -99,12 +89,6 @@ object Example extends FlightDSL with SQLitePopulator {
 
   val wholeYear = (1 January 2012) -> (31 December 2012)
   val summer = (21 June 2012) -> (21 September 2012)
-
-  // TODO how do we define the default price, here, or in PricingScheme?
-  // Here: + directly linked to the flight + pretty
-  // PricingScheme: + not problems with overlap (e.g. Business @
-  //                  Christmas = 400 in the Schedule, but also * 2 in
-  //                  the PricingScheme)
 
   FlightTemplate(BM, 1628)(BRU -> CDG, 757.km)(Boeing727) {
     new Schedule()
