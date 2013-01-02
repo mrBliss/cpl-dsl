@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- SQL XML created by WWW SQL Designer, http://code.google.com/p/wwwsqldesigner/ -->
-<!-- Active URL: http://localhost/wwwsqldesigner/ -->
+<!-- Active URL: file:///home/s0202013/Documents/CPL/cpl-dsl/analysis/wwwsqldesigner/index.html -->
 <sql>
 <datatypes db="mysql">
 	<group label="Numeric" color="rgb(238,238,170)">
@@ -37,7 +37,7 @@
 		<type label="SET" length="1" sql="SET" quote=""/>
 		<type label="Bit" length="0" sql="bit" quote=""/>
 	</group>
-</datatypes><table x="441" y="184" name="City">
+</datatypes><table x="483" y="39" name="City">
 <row name="id" null="0" autoincrement="1">
 <datatype>INT</datatype>
 <default>NULL</default></row>
@@ -52,7 +52,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="604" y="185" name="Airport">
+<table x="660" y="43" name="Airport">
 <row name="code" null="0" autoincrement="0">
 <datatype>VARCHAR(3)</datatype>
 <default>'???'</default></row>
@@ -67,7 +67,7 @@
 <part>code</part>
 </key>
 </table>
-<table x="238" y="184" name="Country">
+<table x="309" y="41" name="Country">
 <row name="id" null="0" autoincrement="1">
 <datatype>INT</datatype>
 <default>NULL</default></row>
@@ -78,7 +78,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="796" y="177" name="Connection">
+<table x="852" y="41" name="Connection">
 <row name="id" null="0" autoincrement="1">
 <datatype>INT</datatype>
 <default>NULL</default></row>
@@ -101,7 +101,7 @@
 <part>code_toAirport</part>
 </key>
 </table>
-<table x="1179" y="184" name="FlightTemplate">
+<table x="864" y="266" name="FlightTemplate">
 <row name="id" null="0" autoincrement="1">
 <datatype>INT</datatype>
 <default>NULL</default></row>
@@ -123,7 +123,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="982" y="61" name="AirlineCompany">
+<table x="841" y="420" name="AirlineCompany">
 <row name="code" null="0" autoincrement="0">
 <datatype>VARCHAR(3)</datatype>
 <default>'???'</default><relation table="FlightTemplate" row="code_AirlineCompany" />
@@ -135,7 +135,7 @@
 <part>code</part>
 </key>
 </table>
-<table x="753" y="401" name="SeatType">
+<table x="323" y="443" name="SeatType">
 <row name="id" null="0" autoincrement="1">
 <datatype>INT</datatype>
 <default>NULL</default></row>
@@ -146,7 +146,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="1391" y="304" name="Flight">
+<table x="550" y="256" name="Flight">
 <row name="id" null="0" autoincrement="1">
 <datatype>INT</datatype>
 <default>NULL</default></row>
@@ -157,7 +157,7 @@
 <row name="dateTime" null="0" autoincrement="0">
 <datatype>DATETIME</datatype>
 <default>'NULL'</default></row>
-<row name="code_AirplaneModel" null="0" autoincrement="0">
+<row name="id_AirplaneModel" null="0" autoincrement="0">
 <datatype>INT</datatype>
 <default>NULL</default><relation table="AirplaneModel" row="id" />
 </row>
@@ -165,10 +165,9 @@
 <part>id</part>
 </key>
 <key type="UNIQUE" name="unique_flight_at_time">
-<part>time</part>
 </key>
 </table>
-<table x="907" y="701" name="AirplaneModel">
+<table x="547" y="505" name="AirplaneModel">
 <row name="id" null="0" autoincrement="1">
 <datatype>INT</datatype>
 <default>NULL</default></row>
@@ -189,7 +188,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="1138" y="864" name="Manufacturer">
+<table x="816" y="561" name="Manufacturer">
 <row name="id" null="0" autoincrement="1">
 <datatype>INT</datatype>
 <default>NULL</default></row>
@@ -200,7 +199,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="1048" y="337" name="SeatPricing">
+<table x="321" y="265" name="SeatPricing">
 <row name="id" null="0" autoincrement="1">
 <datatype>INT</datatype>
 <default>NULL</default></row>
