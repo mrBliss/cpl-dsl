@@ -53,9 +53,6 @@ object Example extends FlightDSL with MySQLPopulator {
   val Boeing727 = "Boeing 727" of Boeing carries 145.p flies 963.kmh
   val Boeing737_800 = "Boeing 737-800" of Boeing carries 160.p flies 828.kmh
 
-  // One kind of seats
-  val SingleClass = seatType("Single Class")
-
   // Two kinds of seats: Business and Economy
   val Business = seatType("Business")
   val Economy = seatType("Economy")
@@ -81,10 +78,28 @@ object Example extends FlightDSL with MySQLPopulator {
     val scheme = highSeason
   })
 
-  val SN = company("SN", "SN Brussels Airlines", null)
-  val FR = company("FR", "Ryanair", null)
-  val QF = company("QF", "Qantas Airways", null)
-  val LH = company("LH", "Deutsche Lufthansa", null)
+  val SN = company("SN", "SN Brussels Airlines", new PricingScheme {
+
+    def isHighSeason(date: Date): Boolean =
+      date.in(1 December 2012, 15 March 2013) ||
+      date.in(1 July 2013, 30 September 2013) ||
+      date.in(1 December 2013, 15 March 2014)
+
+    val highSeason: PricingScheme = {
+      case (_, date, price) if isHighSeason(date) => price * 1.1
+    }
+
+    val specialActionOnSecondClass: PricingScheme = {
+      case (SecondClass, date, price) if date.in(15 July 2012, 15 August 2012) => price - 50.EUR
+    }
+
+    val backToSchool: PricingScheme = {
+      case (ThirdClass, date, price) if date.in(15 August 2012, 31 August 2012) => price - 10.EUR
+    }
+
+    val scheme = highSeason andAlso specialActionOnSecondClass
+  })
+
 
 
   // Flights
@@ -92,6 +107,7 @@ object Example extends FlightDSL with MySQLPopulator {
   val wholeYear = (1 January 2012) -> (31 December 2012)
   val summer = (21 June 2012) -> (21 September 2012)
 
+  // British Midlands
   FlightTemplate(BM, 1628)(BRU -> CDG, 757.km)(Boeing727) {
     new Schedule()
       .at(9 h 55, every(Monday) during wholeYear) {
@@ -104,6 +120,25 @@ object Example extends FlightDSL with MySQLPopulator {
       .at(15 h 3, 24 December 2012) {
       Business -> (20.seats at 400.EUR);
       Economy -> (125.seats at 300.EUR)
+    }
+  }
+
+  FlightTemplate(BM, 2439)(FRA -> ARN, 1227.km)(Boeing737_800) {
+    new Schedule()
+      .at(4 h 23, every(Saturday) during wholeYear) {
+      Business -> (40.seats at 350.EUR);
+      Economy -> (120.seats at 250.EUR)
+    }
+  }
+
+
+  // SN Brussels Airlines
+  FlightTemplate(SN, 324)(BRU -> CIA, 1187.km)(AirbusA380) {
+    new Schedule()
+      .at(21 h 40, every(Tuesday, Thursday) during summer) {
+      FirstClass -> (42.seats at 600.EUR);
+      SecondClass -> (102.seats at 325.EUR)
+      ThirdClass -> (500.seats at 287.EUR)
     }
   }
 }

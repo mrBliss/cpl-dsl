@@ -122,8 +122,8 @@ trait FlightDSL extends DelayedInit with DBDefinition {
 
   // Flights
 
-  implicit def dayRange(weekDay: WeekDay) = new {
-    def during(interval: Interval): Seq[Date] = weekDay in interval
+  implicit def dayRange(weekDays: Seq[WeekDay]) = new {
+    def during(interval: Interval): Seq[Date] = weekDays flatMap(_ in interval)
   }
 
   implicit def hourSyntax(hours: Int) = new {
@@ -145,8 +145,7 @@ trait FlightDSL extends DelayedInit with DBDefinition {
     }
   }
 
-  def every(weekDay: WeekDay): WeekDay = weekDay
-
+  def every(weekDays: WeekDay*): Seq[WeekDay] = weekDays
 
   private var flightTemplates: Vector[FlightTemplate] = Vector()
   private var flights: Vector[Flight] = Vector()
