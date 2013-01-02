@@ -4,19 +4,19 @@ import java.sql.{ Connection, DriverManager, ResultSet, SQLException, Statement 
 
 object TableImport extends App {
 
-  val importFileLoc = ".\\analysis\\database.sqlite"
+  val importFileLoc = "analysis/database.sql"
 
   println("Importing table file from: " + System.getProperty("user.dir")
     + importFileLoc.substring(1, importFileLoc.length()))
   val importData = Source.fromFile(importFileLoc).mkString
-  println(importData)
+  // println(importData)
 
   var queries = importData.split(";");
 
-  // Load the SQLite driver
-  Class.forName("org.sqlite.JDBC");
+  // Load the MySQL driver
+  Class.forName("com.mysql.jdbc.Driver");
 
-  val conn = DriverManager.getConnection("jdbc:sqlite:test.db");
+  val conn = DriverManager.getConnection("jdbc:mysql://localhost/cpl?user=cpl&password=clarke");
   val statement = conn.createStatement()
   statement.setQueryTimeout(30);
   for (query <- queries) {
