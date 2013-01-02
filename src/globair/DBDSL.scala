@@ -65,17 +65,18 @@ object DBDSL {
     protected def columns(cols: (String, Field[_])*): Map[String, Field[_]] = Map(cols: _*)
 
     // TODO
-    protected def autoInc(keyName: String): Key[Nothing] = null
+    protected def autoInc(keyName: String): Option[String] = None
 
     // TODO
-    protected def useAsKey(keyName: String): Key[String] = null
+    protected def useAsKey(keyName: String): Option[String] = Some(keyName)
 
     // TODO
     protected def unique(fields: String*): Unit = null
 
     def row: Map[String, Field[_]]
 
-    def key: Key[_]
+    // def key: Key[_]
+    def key: Option[String]
 
     def tableName = this.getClass.getSimpleName
     private def prepareStatement(conn: Connection, dataTypeMapper: SQLDataTypeMapper, idMap: IDMap): PreparedStatement = {

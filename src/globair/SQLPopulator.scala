@@ -20,11 +20,13 @@ trait SQLDataTypeMapper {
   def apply(bd: BigDecimal)(prepStat: PreparedStatement, i: Int, idMap: IDMap) =
       prepStat.setBigDecimal(i, bd.bigDecimal)
 
-  def apply(entity: Entity)(prepStat: PreparedStatement, i: Int, idMap: IDMap) =
-      idMap get entity match {
-        case Some(id) => prepStat.setInt(i, id)
-        case None => stateError("No ID for entity " + entity)
-      }
+  def apply(entity: Entity)(prepStat: PreparedStatement, i: Int, idMap: IDMap) = entity.key match {
+    case Some(keyName) => entity.row(keyName).prep(this)(prepStat, i, idMap)
+    case None => idMap get entity match {
+      case Some(id) => prepStat.setInt(i, id)
+      case None => stateError("No ID for entity " + entity)
+    }
+  }
 }
 
 trait SQLPopulator {
