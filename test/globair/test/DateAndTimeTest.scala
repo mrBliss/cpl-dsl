@@ -3,6 +3,7 @@ package globair.test
 import org.scalatest.FunSuite
 import scala.collection.mutable.Stack
 
+
 class DateAndTimeSuite extends FunSuite {
   import globair.WeekDay
   import globair.WeekDay._
@@ -29,7 +30,7 @@ class DateAndTimeSuite extends FunSuite {
     assert(d.day === 19)
     assert(d.month === February)
     assert(d.year === 2012)
-    intercept[ org.joda.time.IllegalFieldValueException] {
+    intercept[org.joda.time.IllegalFieldValueException] {
       Date(30, February, 2012)
     }
   }
@@ -54,6 +55,16 @@ class DateAndTimeSuite extends FunSuite {
     assert(((27 December 2012) in ((26 December 2012) -> (27 December 2012))) === true)
     assert(((27 December 2012) in ((27 December 2012) -> (27 December 2012))) === true)
     assert(((27 December 2012) in ((24 December 2012) -> (25 December 2012))) === false)
+  }
+
+  import org.joda.time.Interval
+  test("Invalid range") {
+    intercept[java.lang.IllegalArgumentException] {
+      val interval: Interval = (26 March 2013) -> (26 March 2012)
+    }
+    intercept[java.lang.IllegalArgumentException] {
+      val interval: Interval = (27 December 2012) -> (26 December 2012)
+    }
   }
 
   test("WeekDays in range") {

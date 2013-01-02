@@ -90,11 +90,17 @@ trait FlightDSL extends DelayedInit with DBDefinition {
   }
 
   implicit def pUnit(ps: Int) = new {
-    def p: Int = ps
+    def p: Int = {
+      require(ps >= 0, "The number of passengers an airplane can carry must not be negative")
+      ps
+    }
   }
 
   implicit def kmhUnit(kmhs: Int) = new {
-    def kmh: Int = kmhs
+    def kmh: Int = {
+      require(kmhs > 0, "The cruise speed of an airplane must be larger than zero km/h")
+      kmhs
+    }
   }
 
   // Airline Companies
@@ -157,6 +163,13 @@ trait FlightDSL extends DelayedInit with DBDefinition {
         argError("%s cannot carry %d passengers" format(airplaneModel, totalNbSeats))
     }
 
+    val flightCodeNumber = new FlightCodeNumber(flightCode.toString)
+
+    // Check if there is no other flight template with the same code
+    if (flightTemplates exists(_.code == flightCodeNumber))
+      argError("The code of a flight template must be unique")
+
+
     val (from, to) = fromTo
 
     // Save the connection
@@ -164,7 +177,7 @@ trait FlightDSL extends DelayedInit with DBDefinition {
     connections :+= conn
 
     // Save the FlightTemplate
-    val flightTemplate = new FlightTemplate(new FlightCodeNumber(flightCode.toString), company, conn)
+    val flightTemplate = new FlightTemplate(flightCodeNumber, company, conn)
     flightTemplates :+= flightTemplate
 
     // Flights

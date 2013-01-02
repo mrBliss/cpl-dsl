@@ -61,6 +61,8 @@ trait DBEntities {
 
   case class Connection(from: Airport, to: Airport, distance: Double)
     extends Entity {
+    require(from != to)
+
     val key = autoInc("id")
     val row = columns("code_fromAirport" -> from, "code_toAirport" -> to, "distance" -> distance)
     unique("code_fromAirport", "code_toAirport")

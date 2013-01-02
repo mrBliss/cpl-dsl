@@ -125,9 +125,12 @@ class Date(val date: LocalDate) extends Ordered[Date] {
   def +(period: ReadablePeriod): Date = new Date(date plus period)
   def -(period: ReadablePeriod): Date = new Date(date minus period)
 
-  def ->(endDate: Date): Interval =
+  def ->(endDate: Date): Interval = {
+    if (endDate < this)
+      argError("The end date must occur after the begin date")
     new Interval(this.date.toDateTimeAtStartOfDay,
                  (endDate + 1.days).date.toDateTimeAtStartOfDay)
+  }
 
   def in(interval: Interval): Boolean = interval.contains(date.toDateTimeAtStartOfDay)
 
