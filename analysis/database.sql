@@ -14,9 +14,9 @@
 DROP TABLE IF EXISTS `City`;
 
 CREATE TABLE `City` (
-  `id` INT NOT NULL AUTO_INCREMENT DEFAULT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(100) NULL DEFAULT NULL,
-  `id_Country` INT NOT NULL DEFAULT NULL,
+  `id_Country` INT NOT NULL,
   PRIMARY KEY (`id`)
 );
 
@@ -30,7 +30,7 @@ DROP TABLE IF EXISTS `Airport`;
 CREATE TABLE `Airport` (
   `code` VARCHAR(3) NOT NULL DEFAULT '???',
   `name` VARCHAR(100) NULL DEFAULT NULL,
-  `id_City` INT NOT NULL DEFAULT NULL,
+  `id_City` INT NOT NULL,
   PRIMARY KEY (`code`)
 );
 
@@ -42,7 +42,7 @@ CREATE TABLE `Airport` (
 DROP TABLE IF EXISTS `Country`;
 
 CREATE TABLE `Country` (
-  `id` INT NOT NULL AUTO_INCREMENT DEFAULT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(100) NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
 );
@@ -55,10 +55,10 @@ CREATE TABLE `Country` (
 DROP TABLE IF EXISTS `Connection`;
 
 CREATE TABLE `Connection` (
-  `id` INT NOT NULL AUTO_INCREMENT DEFAULT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
   `code_fromAirport` VARCHAR(3) NOT NULL DEFAULT '???',
   `code_toAirport` VARCHAR(3) NOT NULL DEFAULT '???',
-  `distance` DOUBLE NOT NULL DEFAULT NULL,
+  `distance` DOUBLE NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY (`code_fromAirport`, `code_toAirport`)
 );
@@ -71,10 +71,10 @@ CREATE TABLE `Connection` (
 DROP TABLE IF EXISTS `FlightTemplate`;
 
 CREATE TABLE `FlightTemplate` (
-  `id` INT NOT NULL AUTO_INCREMENT DEFAULT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
   `code` VARCHAR(4) NOT NULL DEFAULT '????',
   `code_AirlineCompany` VARCHAR(3) NOT NULL DEFAULT '???',
-  `id_Connection` INT NOT NULL DEFAULT NULL,
+  `id_Connection` INT NOT NULL,
   UNIQUE KEY (`code`, `code_AirlineCompany`),
   PRIMARY KEY (`id`)
 );
@@ -100,7 +100,7 @@ CREATE TABLE `AirlineCompany` (
 DROP TABLE IF EXISTS `SeatType`;
 
 CREATE TABLE `SeatType` (
-  `id` INT NOT NULL AUTO_INCREMENT DEFAULT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(100) NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
 );
@@ -113,10 +113,10 @@ CREATE TABLE `SeatType` (
 DROP TABLE IF EXISTS `Flight`;
 
 CREATE TABLE `Flight` (
-  `id` INT NOT NULL AUTO_INCREMENT DEFAULT NULL,
-  `id_FlightTemplate` INT NOT NULL DEFAULT NULL,
-  `dateTime` DATETIME NOT NULL DEFAULT 'NULL',
-  `id_AirplaneModel` INT NOT NULL DEFAULT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_FlightTemplate` INT NOT NULL,
+  `dateTime` DATETIME NOT NULL,
+  `id_AirplaneModel` INT NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY (`dateTime`)
 );
@@ -129,11 +129,11 @@ CREATE TABLE `Flight` (
 DROP TABLE IF EXISTS `AirplaneModel`;
 
 CREATE TABLE `AirplaneModel` (
-  `id` INT NOT NULL AUTO_INCREMENT DEFAULT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(50) NULL DEFAULT NULL,
-  `cruiseSpeed` DOUBLE NOT NULL DEFAULT NULL,
-  `maxNbOfSeats` MEDIUMINT NOT NULL DEFAULT NULL,
-  `id_Manufacturer` INT NOT NULL DEFAULT NULL,
+  `cruiseSpeed` DOUBLE NOT NULL,
+  `maxNbOfSeats` MEDIUMINT NOT NULL,
+  `id_Manufacturer` INT NOT NULL,
   PRIMARY KEY (`id`)
 );
 
@@ -145,7 +145,7 @@ CREATE TABLE `AirplaneModel` (
 DROP TABLE IF EXISTS `Manufacturer`;
 
 CREATE TABLE `Manufacturer` (
-  `id` INT NOT NULL AUTO_INCREMENT DEFAULT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(100) NOT NULL DEFAULT 'NULL',
   PRIMARY KEY (`id`)
 );
@@ -158,11 +158,11 @@ CREATE TABLE `Manufacturer` (
 DROP TABLE IF EXISTS `SeatPricing`;
 
 CREATE TABLE `SeatPricing` (
-  `id` INT NOT NULL AUTO_INCREMENT DEFAULT NULL,
-  `id_SeatType` INT NOT NULL DEFAULT NULL,
-  `id_Flight` INT NOT NULL DEFAULT NULL,
-  `price` DECIMAL(19,4) NOT NULL DEFAULT NULL,
-  `nbSeats` MEDIUMINT NOT NULL DEFAULT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_SeatType` INT NOT NULL,
+  `id_Flight` INT NOT NULL,
+  `price` DECIMAL(19,4) NOT NULL,
+  `nbSeats` MEDIUMINT NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY (`id_SeatType`, `id_Flight`)
 );
@@ -176,7 +176,8 @@ ALTER TABLE `Airport` ADD FOREIGN KEY (id_City) REFERENCES `City` (`id`);
 ALTER TABLE `Connection` ADD FOREIGN KEY (code_fromAirport) REFERENCES `Airport` (`code`);
 ALTER TABLE `Connection` ADD FOREIGN KEY (code_toAirport) REFERENCES `Airport` (`code`);
 ALTER TABLE `FlightTemplate` ADD FOREIGN KEY (id_Connection) REFERENCES `Connection` (`id`);
-ALTER TABLE `AirlineCompany` ADD FOREIGN KEY (code) REFERENCES `FlightTemplate` (`code_AirlineCompany`);
+ALTER TABLE `FlightTemplate` ADD FOREIGN KEY (code_AirlineCompany) REFERENCES `AirlineCompany` (`code`);
+-- ALTER TABLE `AirlineCompany` ADD FOREIGN KEY (code) REFERENCES `FlightTemplate` (`code_AirlineCompany`);
 ALTER TABLE `Flight` ADD FOREIGN KEY (id_FlightTemplate) REFERENCES `FlightTemplate` (`id`);
 ALTER TABLE `Flight` ADD FOREIGN KEY (id_AirplaneModel) REFERENCES `AirplaneModel` (`id`);
 ALTER TABLE `AirplaneModel` ADD FOREIGN KEY (id_Manufacturer) REFERENCES `Manufacturer` (`id`);
