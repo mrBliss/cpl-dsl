@@ -116,7 +116,7 @@ CREATE TABLE `Flight` (
   `id` INT NOT NULL AUTO_INCREMENT DEFAULT NULL,
   `id_FlightTemplate` INT NOT NULL DEFAULT NULL,
   `dateTime` DATETIME NOT NULL DEFAULT 'NULL',
-  `code_AirplaneModel` INT NOT NULL DEFAULT NULL,
+  `id_AirplaneModel` INT NOT NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY (`dateTime`)
 );
@@ -178,7 +178,7 @@ ALTER TABLE `Connection` ADD FOREIGN KEY (code_toAirport) REFERENCES `Airport` (
 ALTER TABLE `FlightTemplate` ADD FOREIGN KEY (id_Connection) REFERENCES `Connection` (`id`);
 ALTER TABLE `AirlineCompany` ADD FOREIGN KEY (code) REFERENCES `FlightTemplate` (`code_AirlineCompany`);
 ALTER TABLE `Flight` ADD FOREIGN KEY (id_FlightTemplate) REFERENCES `FlightTemplate` (`id`);
-ALTER TABLE `Flight` ADD FOREIGN KEY (code_AirplaneModel) REFERENCES `AirplaneModel` (`id`);
+ALTER TABLE `Flight` ADD FOREIGN KEY (id_AirplaneModel) REFERENCES `AirplaneModel` (`id`);
 ALTER TABLE `AirplaneModel` ADD FOREIGN KEY (id_Manufacturer) REFERENCES `Manufacturer` (`id`);
 ALTER TABLE `SeatPricing` ADD FOREIGN KEY (id_SeatType) REFERENCES `SeatType` (`id`);
 ALTER TABLE `SeatPricing` ADD FOREIGN KEY (id_Flight) REFERENCES `Flight` (`id`);
@@ -217,7 +217,7 @@ ALTER TABLE `SeatPricing` ADD FOREIGN KEY (id_Flight) REFERENCES `Flight` (`id`)
 -- ('','');
 -- INSERT INTO `SeatType` (`id`,`name`) VALUES
 -- ('','');
--- INSERT INTO `Flight` (`id`,`id_FlightTemplate`,`dateTime`,`code_AirplaneModel`) VALUES
+-- INSERT INTO `Flight` (`id`,`id_FlightTemplate`,`dateTime`,`id_AirplaneModel`) VALUES
 -- ('','','','');
 -- INSERT INTO `AirplaneModel` (`id`,`name`,`cruiseSpeed`,`maxNbOfSeats`,`id_Manufacturer`) VALUES
 -- ('','','','','');

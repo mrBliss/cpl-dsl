@@ -83,7 +83,7 @@ trait DBEntities {
     airplaneModel: AirplaneModel) extends Entity {
     val key = autoInc("id")
     val row = columns("id_FlightTemplate" -> template, "dateTime" -> dateTime,
-                      "code_AirplaneModel" -> airplaneModel)
+                      "id_AirplaneModel" -> airplaneModel)
     unique("time")
   }
 
