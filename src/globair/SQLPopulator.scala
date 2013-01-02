@@ -77,3 +77,12 @@ trait SQLitePopulator extends SQLPopulator {
       prepStat.setString(i, bd.toString)
   }
 }
+
+trait MySQLPopulator extends SQLPopulator {
+
+  def connect(jdbcString: String): Connection = {
+    Class.forName("com.mysql.jdbc.Driver")
+    DriverManager.getConnection(jdbcString)
+  }
+
+}
