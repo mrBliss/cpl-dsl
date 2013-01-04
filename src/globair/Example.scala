@@ -3,14 +3,12 @@ package globair
 /**
  * Example usage of the DSL
  */
-// object Example extends FlightDSL with SQLitePopulator {
-object Example extends FlightDSL with MySQLPopulator {
+object Example extends FlightDSL with SQLitePopulator {
   import Date._
   import Month._
   import WeekDay._
 
-  // val dbName = "jdbc:sqlite:test.db"
-  val dbName = "jdbc:mysql://localhost/cpl?user=cpl&password=clarke"
+  val dbName = "jdbc:sqlite:test.db"
 
   // Countries
   val Belgium = country("Belgium")
