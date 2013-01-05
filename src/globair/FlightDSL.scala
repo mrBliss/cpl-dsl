@@ -79,9 +79,9 @@ trait FlightDSL extends DelayedInit with DBDefinition {
   private var airplaneModels: Vector[AirplaneModel] = Vector()
   implicit def airplaneModelOf(airplaneModelName: String) =  new {
     def of(company: Manufacturer) = new {
-      def carries(passengers: Int) = new {
-        def flies(speed: Int): AirplaneModel = {
-          val model = AirplaneModel(airplaneModelName, passengers, speed, company)
+      def carries(passengers: Passengers) = new {
+        def flies(speed: Kmh): AirplaneModel = {
+          val model = AirplaneModel(airplaneModelName, passengers.ps, speed.kmhs, company)
           airplaneModels :+= model
           model
         }
@@ -89,17 +89,20 @@ trait FlightDSL extends DelayedInit with DBDefinition {
     }
   }
 
-  implicit def pUnit(ps: Int) = new {
-    def p: Int = {
-      require(ps >= 0, "The number of passengers an airplane can carry must not be negative")
-      ps
-    }
+  case class Passengers(ps: Int) {
+    require(ps >= 0, "The number of passengers an airplane can carry must not be negative")
   }
 
+  implicit def pUnit(ps: Int) = new {
+    def p: Passengers = Passengers(ps)
+  }
+
+  case class Kmh(kmhs: Int)
+
   implicit def kmhUnit(kmhs: Int) = new {
-    def kmh: Int = {
+    def kmh: Kmh = {
       require(kmhs > 0, "The cruise speed of an airplane must be larger than zero km/h")
-      kmhs
+      Kmh(kmhs)
     }
   }
 
@@ -130,8 +133,9 @@ trait FlightDSL extends DelayedInit with DBDefinition {
     def h(minutes: Int) = Time(hours, minutes)
   }
 
+  case class Km(kms: Double)
   implicit def kmUnit(kms: Int) = new {
-    def km: Double = kms
+    def km: Km = Km(kms)
   }
 
   implicit def weekDayRange(start: WeekDay) = new {
@@ -147,7 +151,6 @@ trait FlightDSL extends DelayedInit with DBDefinition {
       range
     }
   }
-
 
   import DBDSL.Price
   implicit def currenctySyntax(amount: Int) = new {
@@ -166,7 +169,7 @@ trait FlightDSL extends DelayedInit with DBDefinition {
   private var flights: Vector[Flight] = Vector()
   private var seatPricings: Vector[SeatPricing] = Vector()
   def FlightTemplate(company: AirlineCompany, flightCode: Int)
-                    (fromTo: (Airport, Airport), distance: Double)
+                    (fromTo: (Airport, Airport), distance: Km)
                     (airplaneModel: AirplaneModel)
                     (schedule: Schedule): Unit = {
 
@@ -187,7 +190,7 @@ trait FlightDSL extends DelayedInit with DBDefinition {
     val (from, to) = fromTo
 
     // Save the connection
-    val conn = Connection(from, to, distance)
+    val conn = Connection(from, to, distance.kms)
     connections :+= conn
 
     // Save the FlightTemplate
