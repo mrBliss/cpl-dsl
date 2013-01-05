@@ -51,7 +51,7 @@ trait FlightDSL extends DelayedInit with DBDefinition {
   private var cities: Vector[City] = Vector()
   implicit def cityIn(cityName: String) = new {
     def in(country: Country) = {
-      val city = new City(cityName, country)
+      val city = City(cityName, country)
       cities :+= city
       city
     }
@@ -61,7 +61,7 @@ trait FlightDSL extends DelayedInit with DBDefinition {
   private var airports: Vector[Airport] = Vector()
   implicit def airportAt(pair: (String, String)) = new {
     def at(city: City): Airport = {
-      val airport = new Airport(new AirportCode(pair._1), pair._2, city)
+      val airport = Airport(AirportCode(pair._1), pair._2, city)
       airports :+= airport
       airport
     }
@@ -81,7 +81,7 @@ trait FlightDSL extends DelayedInit with DBDefinition {
     def of(company: Manufacturer) = new {
       def carries(passengers: Int) = new {
         def flies(speed: Int): AirplaneModel = {
-          val model = new AirplaneModel(airplaneModelName, passengers, speed, company)
+          val model = AirplaneModel(airplaneModelName, passengers, speed, company)
           airplaneModels :+= model
           model
         }
@@ -108,7 +108,7 @@ trait FlightDSL extends DelayedInit with DBDefinition {
   private var pricingSchemes: Map[AirlineCompany, PricingScheme] = Map()
   def company(code: String, name: String,
               pricingScheme: => PricingScheme): AirlineCompany = {
-    val company = new AirlineCompany(AirlineCode(code), name)
+    val company = AirlineCompany(AirlineCode(code), name)
     airlineCompanies :+= company
     pricingSchemes += (company -> (pricingScheme))
     company
@@ -177,7 +177,7 @@ trait FlightDSL extends DelayedInit with DBDefinition {
         argError("%s cannot carry %d passengers" format(airplaneModel, totalNbSeats))
     }
 
-    val flightCodeNumber = new FlightCodeNumber(flightCode.toString)
+    val flightCodeNumber = FlightCodeNumber(flightCode.toString)
 
     // Check if there is no other flight template with the same code
     if (flightTemplates exists(_.code == flightCodeNumber))
@@ -187,11 +187,11 @@ trait FlightDSL extends DelayedInit with DBDefinition {
     val (from, to) = fromTo
 
     // Save the connection
-    val conn = new Connection(from, to, distance)
+    val conn = Connection(from, to, distance)
     connections :+= conn
 
     // Save the FlightTemplate
-    val flightTemplate = new FlightTemplate(flightCodeNumber, company, conn)
+    val flightTemplate = FlightTemplate(flightCodeNumber, company, conn)
     flightTemplates :+= flightTemplate
 
     // Flights
