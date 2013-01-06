@@ -4,6 +4,7 @@ package globair
  * Definition of the database tables
  * DBFields: custom field types that can be used by the tables
  * DBEntities: the database tables
+ * DBDefinition: the two traits above together
  */
 
 trait DBFields {

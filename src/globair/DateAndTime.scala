@@ -1,7 +1,7 @@
 package globair
 
 /**
- * Auxiliary classes for times: WeekDay, Month, Date, Time
+ * Auxiliary classes for times: WeekDay, Month, Date, Time, and DateTime
  * Date is based on joda-time's LocalDate.
  *
  */

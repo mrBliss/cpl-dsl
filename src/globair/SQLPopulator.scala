@@ -31,6 +31,8 @@ trait SQLDataTypeMapper {
 
 trait SQLPopulator {
 
+  // Should load the JDBC driver and return a connection for the given
+  // JDBC String.
   def connect(jdbcString: String): Connection
 
 
