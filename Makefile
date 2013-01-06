@@ -1,4 +1,4 @@
-MAIN = globair.Main
+MAIN = globair.Example
 
 compile:
 	mvn compile

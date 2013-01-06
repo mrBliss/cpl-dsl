@@ -18,7 +18,7 @@ trait FlightDSL extends DelayedInit with DBDefinition {
     initCode += (() => body)
   }
 
-  def run() {
+  final def main(args: Array[String]) = {
     for (proc <- initCode) proc()
 
     // Order matters! To populate entity A that keeps a link to entity
