@@ -6,13 +6,28 @@ package globair
 trait FlightDSL extends DelayedInit with DBDefinition {
   self: SQLPopulator =>
 
+  /*
+   * We extend DelayedInit (see
+   * http://www.scala-lang.org/api/2.9.2/scala/DelayedInit.html) to
+   * accomplish the following (much like the App trait, which also
+   * extends DelayedInit). An object X that mixes-in the FlightDSL
+   * trait can also be executed as a program. The main method we
+   * define here will run all the code defined in the object X, and
+   * also populate the database.
+   *
+   * Alternatively, we could require the users of FlightDSL to call
+   * some sort of method at the end that populates the database, but
+   * if the method call were forgotten, nothing would be stored in the
+   * database at all.
+   */
+
   // A JDBC String that identifies the database, e.g.
   // "jdbc:sqlite:test.db", must be provided by implementers of this
   // trait.
   def dbName: String
 
+  // Store all statement and value definitions
   import collection.mutable.ListBuffer
-
   private val initCode = new ListBuffer[() => Unit]
   override def delayedInit(body: => Unit) {
     initCode += (() => body)
@@ -36,7 +51,6 @@ trait FlightDSL extends DelayedInit with DBDefinition {
       flights,
       seatPricings
     )
-    // TODO it's quite slow (due to printing?)
   }
 
   // Countries
@@ -235,6 +249,9 @@ trait FlightDSL extends DelayedInit with DBDefinition {
       case (_, _, price) => price
     }
 
+    // Applies this partial function and then schemeA, if this partial
+    // function isn't defined on the input, schemeA is applied
+    // directly.
     implicit def andAlsoFunc(schemeA: PricingScheme) = new {
       def andAlso(schemeB: PricingScheme): PricingScheme =
         new PartialFunction[(SeatType, Date, Price), Price] {
