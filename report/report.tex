@@ -4,7 +4,11 @@
 \usepackage[bitstream-charter]{mathdesign}
 \usepackage[T1]{fontenc}
 \usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{parskip}
 
+% Put code in \cc{THE_CODE}, \cc{...} is shorter than \texttt{...}
+\newcommand{\cc}[1]{\texttt{#1}}
 
 \begin{document}
 \selectlanguage{english}
@@ -110,7 +114,229 @@ This means that two seats, both of the same seat type and both on flights that f
 \section{Implementation overview}
 \label{sec:implementation-overview}
 
+
 % A general overview of the implementation approach, including a description of the API upon which it is based and any tricky implementation techniques employed. Some justification of the chosen implementation language needs also to be provided.
+
+TODO API
+
+\subsection{Implementation language}
+\label{sec:implementation-language}
+
+We chose to implement our DSL in Scala for the following reasons:
+
+\paragraph{Static Typing}
+Scala is statically typed and has a rather advanced type system.
+Scala's type system allows us to express and verify more complex types of expressions.
+A whole class of consistency checks related to types can be eliminated in the DSL, thanks to static typing.
+
+\paragraph{Familiarity}
+Although only one group member had experience with programming in Scala before the \textsc{CPL} course, Scala is not too unfamiliar for experienced Java programmers.
+Syntactically, Scala is quite similar to Java.
+Programmers familiar with the object-oriented paradigm as it is applied in Java, can start programming in Scala relatively easy, as the \textsc{OO} paradigm is also present in Scala, albeit enhanced and combined with the functional programming paradigm.
+
+\paragraph{Feature Set}
+Scala provides programmers with many useful building blocks for developing DSLs, including, but not limited to:
+
+\begin{itemize}
+\item \textbf{Implicits arguments and conversions}:
+  Implicit arguments alleviate the need to pass around certain parameters, making the program less verbose and more intuitive to read (at times).
+  Implicit conversions provide an easy way to add functionality to existing classes, we used it mainly to add syntactic sugar (see Section~\ref{sec:implementation-syntax}).
+\item \textbf{Operator syntax}:
+  Scala supports the definition of operators just like methods, e.g.\ \cc{BRU -> CDG} is actually a method call.
+  The dot and parentheses in a functional call can be omitted in certain circumstances, allowing more natural language-like syntax, e.g.\ \cc{"Brussels" in Belgium}.
+\item \textbf{Traits}:
+  Traits are (also) a useful way to structure to code into units of functionality.
+  Instead of being forced to stick to a strict inheritance relation, or to put all code in one place, we can compartmentalize the functionality into different traits.
+\end{itemize}
+
+\paragraph{Scala 2.9 vs 2.10}
+
+We used Scala version 2.9.2 to implement our DSL.
+Although version 2.10, which includes many useful enhancements, was recently released, it (or at least a final version) wasn't available at the start of the assignment.
+Scala 2.10 has (experimental) support for macros, a very powerful and much wished-for tool for DSL designers.
+Implicit classes are also available in 2.10, which reduce the boilerplate required for some of the tricks described in Section~\ref{sec:implementation-syntax}.
+Another useful addition is the \cc{Dynamic} type: ``\cc{x.foo} becomes \cc{x.applyDynamic("foo")} if \cc{x}'s type does not define a \cc{foo}, but is a subtype of \cc{Dynamic}''.
+This trick, the equivalent of Ruby's \cc{method\_missing}, would be very useful to support extra syntax.
+In hindsight, our DSL could have been much \emph{prettier} if we used Scala 2.10, but because the final version was released only recently (January 4th) and because of time constraints, we chose to stick to the latest stable release, 2.9.2.
+
+\subsection{General Implementation Overview}
+\label{sec:general-implementation-overview}
+
+
+Before a high-level walk through our code, we shall first briefly summarize what our DSL does.
+The idea is to define Cities, Airports, Flights, \ldots{} using an easy to use and intuitive syntax.
+All defined \emph{entities} will then be stored in a database.
+Flight entities are generated from FlightTemplates using a \cc{Schedule} and a \cc{Pricing\-Scheme} (more about these later).
+The database is populated after all entities are defined and the required consistency checks are performed.
+Communication with the database happens through \textsc{JDBC} (Java Database Connectivity).
+As we're using \textsc{JDBC}, we could support a whole host of different database types.
+Currently, we support SQLite (no extra setup required, as the database is stored in a file), which is also the default, and MySQL (one of the most popular database products).
+After running our DSL program, the database will contain the rows defined using the DSL.\@
+% TODO import tables?
+
+We first intended to generate SQL scripts that would insert the generated entities in the database when executed, but this proved to be difficult because of the following reason.
+Imagine we want to generate an \cc{INSERT} statement that would insert a new City in the database.
+A City consists of a name of type String, and a country of type Country, which is another entity (or table).
+In the database table, the country field of the City table is defined as a foreign key that references the Country table via Country's primary key (an auto-generated ID).
+How would such an \cc{INSERT} statement then look?\\
+\cc{INSERT INTO City (name, id\_Country) VALUES ("Brussels", ?)}\\
+Which value should come in the place of the question mark?
+
+The right thing to do, would be to insert the value of the auto-generated ID of the row representing Belgium in the Country table, but we don't know the value of this ID, as we haven't inserted Belgium it in the database yet.
+A possible alternative is to switch to manually generated IDs, but extra attention would have to be paid to prevent conflicts with existing IDs.
+We believe directly communicating with the database at run-time and retrieving the IDs after they were generated, is a more robust solution.
+
+Now follows a high-level tour of the most important parts of our DSL implementation.
+The name of the source file is mentioned in bold.
+More details can be learned from reading the source files, which are provided with commentary.
+
+\paragraph{DBDefinition.scala}
+First of all, we defined case classes for every table or \cc{Entity} in the database.
+The fields of a table correspond with the fields of the case classes, except for the auto-generated keys.
+Custom fields, like \cc{Airport\-Code} and \cc{Air\-line\-Code}, were defined as well.
+
+\paragraph{DBDSL.scala}
+We used a tiny DSL to define these entities (tables).
+This DSL contains the \cc{Entity} trait, that all tables extend.
+An Entity can insert itself into a database using a \cc{PreparedStatement}.
+
+\paragraph{DateAndTime.scala}
+We defined a number of auxiliary classes (\cc{WeekDay}, \cc{Month}, \cc{Date}, \cc{Time}, and \cc{DateTime}) for working with dates and times.
+These classes are mostly wrappers for existing classes from the \href{http://joda-time.sourceforge.net/}{Joda-time library} that provide extra syntactic sugar and methods.
+We chose not to implement the extra functionality in the form of implicit conversions, as the users of our DSL are already working with custom syntax and don't come in touch with the underlying types.
+
+\paragraph{SQLPopulator.scala}
+To support multiple types of databases (currently SQLite and MySQL), we abstracted the common functionality of databases in a trait, \cc{SQL\-Populator}.
+Adding support for a new type of database requires the definition of a new trait that implements the abstract members of SQLPopulator.
+The only abstract member of this trait is\\
+\cc{def connect(jdbcString: String): Connection}\\
+This method will be called only once, should load the correct JDBC driver, and return a new connection to the database.
+Also present is the \cc{SQLDataTypeMapper} trait, which takes care of filling in a PreparedStatement with the appropriate methods, e.g.\ \cc{Prepared\-State\-ment\-\#set\-String(..)}, \cc{Prepared\-State\-ment\-\#set\-Int(..)}, etc.
+The default methods in this trait can also be overriden by database-specific ones, as for example SQLite does not support the \cc{Prepared\-State\-ment\-\#set\-Big\-Decimal(..)} method.
+The user of our DSL can choose which database to use by mixing-in the database-specific SQLPopulator trait (\cc{SQLitePopulator} or \cc{MySQLPopulator}) of his choice.
+
+\paragraph{FlightDSL.scala}
+The actual DSL that will be used by users is defined in \cc{Flight\-DSL.scala}.
+The DSL provides lot of syntactic sugar for defining the Countries, Cities, Airports, Manufacturers (of airplanes), Airplane Models, Airline Companies, Seat Types, and Flight Templates.
+All entities of a certain type defined by the user using DSL syntax are also stored in a Vector.
+At the end, all Vectors are stored in the database.
+
+In our DSL, the user defines Flight Templates from which Flights are generated.
+A Flight is an instantiation of a Flight Template at a certain date and time.
+To generate Flights at certain points in time, a Schedule is used.
+A Schedule is defined through composition.
+Have a look at the following example:
+
+\begin{verbatim}
+val wholeYear = (1 January 2012) -> (31 December 2012)
+new Schedule()
+ .at(9 h 55, every(Monday) during wholeYear) {
+  Business -> (25.seats at 250.EUR);
+  Economy -> (110.seats at 150.EUR)
+}.except(25 December 2012, 6 January 2013)
+ .at(15 h 3, 24 December 2012) {
+  Business -> (20.seats at 400.EUR);
+  Economy -> (125.seats at 300.EUR)
+}
+\end{verbatim}
+
+The first line in the example defines an interval between the beginning of 2012 and the end of 2012, i.e.\ the year 2012.
+The Schedule that is defined states that every Monday of the year, a flight at five to ten in the morning with 25 business seats for 250 euros and 110 economy seats for 150 euros is planned, except on Christmas (if Christmas happened to fall on a Monday in 2012).
+An additional flight is added that flies on the 24th of December, but with higher prices.
+
+A Schedule object stores a sequence of moments when flights would occur, along with pricing information per seat class.
+Flight objects will be generated for every moment in the Schedule.
+
+
+To give maximum control over pricing information, we also introduced Pricing Schemes, which are Airline Company-specific.
+A Pricing Scheme consists of a partial function from Seat Type, Date, and Price to Price.
+It provides users an easy way to adjust prices on flights on certain dates and per Seat Type.
+Have a look at the following example:
+
+\begin{verbatim}
+new PricingScheme {
+  def inSummer(date: Date): Boolean =
+    date.in(21 June 2013, 21 September 2013)
+
+  val highSeason: PricingScheme = {
+    case (_, date, price) if inSummer(date) => price * 1.1
+  }
+
+  val firstClassTax: PricingScheme = {
+    case (FirstClass, _, price) if price > 500.EUR
+      => price + 50.EUR
+  }
+
+  val scheme = highSeason andAlso firstClassTax
+}
+\end{verbatim}
+
+A helper method is defined, \cc{inSummer}.
+Two partial functions are defined and composed to form the \cc{scheme}, the abstract partial function member that must be implemented.
+The first partial function, \cc{highSeason}, raises the price of flights in the summer by 10\%.
+The second partial function, \cc{firstClassTax}, raises the price of first class flights by 50 euros if the price of the flight exceeds 500 euros.
+
+We believe Pricing Schemes give users enough control over flight pricing.
+Of course, additional input parameters could be added, like the Airplane Model or the time of departure, but such changes require only little work.
+Users that wish not to use Pricing Schemes can provide a simple fall-through Pricing Scheme that doesn't influence the price at all.
+
+\subsection{Syntax}
+\label{sec:implementation-syntax}
+
+A pattern (or trick) we often used to add some syntactic sugar is the following.
+Suppose we want to define a city, Brussels for instance, in our DSL.\@
+\cc{City} is a case class with the following definition: \cc{case class City(name: String, country: Country)}\ldots{}
+Instead of \cc{val Brussels = City("Brussels", Belgium)} (\cc{Belgium} is an existing value of type \cc{Country}), we would like to define the city in a style resembling natural language.\\
+For example: \cc{val Brussels = "Brussels" in Belgium}.\footnote{It's a shame we have to mention ``Brussels'' twice.}
+The \cc{in} in the example above is actually a method call on the string \cc{Brussels} with \cc{Belgium} as sole argument.
+Of course, there is no \cc{in} method taking a \cc{Country} defined for strings.
+Using implicit conversions we can easily implement it:
+
+\begin{verbatim}
+implicit def cityIn(cityName: String) = new {
+  def in(country: Country) = City(cityName, country)
+}
+\end{verbatim}
+
+The code above defines an implicit conversion from a string (\cc{cityName}) to a new object on which the method \cc{in(country: Country)} is defined which returns a newly constructed \cc{City} object.
+
+We also applied this pattern to provide a pretty syntax to define dates, e.g.\ \cc{val christmas = 25 December 2013}.
+\cc{December} is actually a method defined on \cc{Int} (the day of the month) that takes a year argument.
+
+This pattern can be applied recursively to form a sentence where method calls connect arguments together.\\
+E.g.\ \cc{"Airbus A320" of Airbus carries 150.p flies 828.kmh}\\
+The required implicit conversion:
+
+\begin{verbatim}
+implicit def airplaneModelOf(modelName: String) =  new {
+  def of(company: Manufacturer) = new {
+    def carries(passengers: Passengers) = new {
+      def flies(speed: Kmh): AirplaneModel =
+        AirplaneModel(modelName, passengers.ps,
+                      speed.kmhs, company)
+    }
+  }
+}
+\end{verbatim}
+
+As you can see in the example above, some numbers have a suffix to make their meaning clearer.
+For example, the \cc{.kmh} in \cc{flies 828.kmh} immediately makes clear that the number is actually the speed, expressed in km/h.
+Without the suffix, it could mean anything, e.g.\ ``flies 828 around the world before requiring maintenance''.
+This is another trick we often applied to improve the legibility of our DSL.
+The suffix is actually a method defined on \cc{Int} via an implicit conversion.
+The implicit conversion that facilitates this:
+\begin{verbatim}
+case class Kmh(kmhs: Int)
+
+implicit def kmhUnit(kmhs: Int) = new {
+  def kmh: Kmh = Kmh(kmhs)
+}
+\end{verbatim}
+
+By defining separate case classes for these unit types instead of relying on the built-in types like \cc{Int} or \cc{Double}, the type checker will signal a type error whenever a user of our DSL forgets a suffix that converts a number to the right unit type.
+Of course, we could make it more extensible by defining a trait for speed, which \cc{KmH} and other classes like \cc{MpH} could implement, but this is a small change that could easily be made when necessary.
+
+
 
 \section{DSL Implementation}
 \label{sec:dsl-implementation}
