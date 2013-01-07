@@ -448,6 +448,200 @@ Of course, we could make it more extensible by defining a trait for speed, which
 
 % Some example DSL programs to illustrate how your DSL is to be used.
 
+We shall now walk through an example DSL program in its entirety.
+Code fragments will be interleaved with descriptive comments.
+The complete example can also be found in the submitted source code.
+
+
+We start with the definition of the \cc{Example} object.
+To have access to the DSL functionality, it must extend the \cc{FlightDSL} trait.
+Also, by mixing-in the SQLitePopulator trait, the user declares that he wishes to use an SQLite database.
+Auxiliary methods are imported from the \cc{Date}, \cc{Month}, and \cc{WeekDay} objects.
+Finally, a JDBC string that declares how the program should connnect to the database, called \cc{test.db}, is defined.
+
+\begin{lstlisting}
+package globair
+object Example extends FlightDSL with SQLitePopulator {
+  import Date._
+  import Month._
+  import WeekDay._
+
+  val dbName = "jdbc:sqlite:test.db"
+\end{lstlisting}
+
+Next, Countries, Cities, Airports, Manufacturers, and Airplane Models are defined.
+The Airport and Airplane Model values will be used later on in the example.
+
+\begin{lstlisting}
+// Countries
+val Belgium = country("Belgium")
+val France = country("France")
+val Germany = country("Germany")
+val Italy = country("Italy")
+val Sweden = country("Sweden")
+
+// Cities
+val Brussels = "Brussels" in Belgium
+val Paris = "Paris" in France
+val Frankfurt = "Frankfurt" in Germany
+val Rome = "Rome" in Italy
+val Stockholm = "Stockholm" in Sweden
+
+// Airports
+val BRU = ("BRU", "Brussels Airport") at Brussels
+val CDG = ("CDG", "Charles de Gaulle Airport") at Paris
+val FRA = ("FRA", "Frankfurst am Main Airport") at Frankfurt
+val CIA = ("CIA", "Rome Ciampino Airport") at Rome
+val ARN = ("ARN", "Stockholm Arlanda Airport") at Stockholm
+
+// Manufacturers
+val Airbus = manufacturer("Airbus")
+val Boeing = manufacturer("Boeing")
+
+// Airplane Models
+val AirbusA380 = "Airbus A380" of Airbus carries 644.p flies 945.kmh
+val Boeing727 = "Boeing 727" of Boeing carries 145.p flies 963.kmh
+val Boeing737_800 = "Boeing 737-800" of Boeing carries 160.p flies 828.kmh
+\end{lstlisting}
+
+Two divisions of Seat Types are then defined.
+Some Airline Companies will have Business and Economy seats, others will divide the seats into three classes.
+Multiple Airline Companies are allowed to share the same Seat Types.
+Only two kinds of divisions were defined for the example, in \emph{reality}, more hierarchies would be defined, possibly with names specific to the Airline Company.
+
+\begin{lstlisting}
+// Two kinds of seats: Business and Economy
+val Business = seatType("Business")
+val Economy = seatType("Economy")
+
+// Three kinds of seats: First, Second, and Third Class
+val FirstClass = seatType("First Class")
+val SecondClass = seatType("Second Class")
+val ThirdClass = seatType("Third Class")
+\end{lstlisting}
+
+What follows is the definition of an Airline Company value for British Midlands.
+The definition of an Airline Company includes the definition of its Pricing Scheme.
+First, a local helper function is defined to determine whether a \cc{Date} lies in the high season, which is defined from the first day of July to the last day of August and from December 15th to March 31st the next year.
+The Pricing Scheme consists of a single partial function, called \cc{highSeason}, which should be read as follows.
+The price for Business seats is raised by 10\% in the high season.
+The price for Economy seats is raised by 5\% in the high season.
+
+\begin{lstlisting}
+// Airline Companies (the code is the official IATA code)
+val BM = company("BM", "British Midlands Airways",
+                 new PricingScheme {
+
+  def inHighSeason(date: Date): Boolean =
+    date.in(1 July 2013, 31 August 2013) ||
+    date.in(15 December 2013, 31 March 2014)
+
+  val highSeason: PricingScheme = {
+    case (Business, date, price) if inHighSeason(date)
+      => price * 1.1
+    case (Economy, date, price) if inHighSeason(date)
+      => price * 1.05
+  }
+
+  val scheme = highSeason
+})
+\end{lstlisting}
+
+Another Airline Company is defined, SN Brussels Airlines.
+Its Pricing Scheme should be read as follows.
+The price of flights in the summer is raised by 10\%.
+There is also a special action on second class seats from July 15th to August 15th, during which a 50 euro discount applies.
+SN Brussels Airlines also has another special action, called Back to School from August 16th to the end of August, during which a 10 euro discount on third class seats applies.
+The \sc{scheme} definition at the end, states that first the \cc{highSeason} partial function is applied, then \cc{special\-Action\-On\-Second\-Class}, and finally \cc{backToSchool}.
+Note that we use \sc{andAlso} to compose the partial functions, which applies both the first and the second partial function, even if the first didn't match, unlike \sc{andThen}.
+
+\begin{lstlisting}
+val SN = company("SN", "SN Brussels Airlines", new PricingScheme {
+
+  def inSummer(date: Date): Boolean =
+    date.in(21 June 2013, 21 September 2013)
+
+  val highSeason: PricingScheme = {
+    case (_, date, price) if inSummer(date) => price * 1.1
+  }
+
+  val specialActionOnSecondClass: PricingScheme = {
+    case (SecondClass, date, price) if date.in(15 July 2013, 15 August 2013) => price - 50.EUR
+  }
+
+  val backToSchool: PricingScheme = {
+    case (ThirdClass, date, price) if date.in(16 August 2013, 31 August 2013) => price - 10.EUR
+  }
+
+  val scheme = highSeason andAlso specialActionOnSecondClass andAlso backToSchool
+})
+\end{lstlisting}
+
+Now follows the definition of a Flight Template for British Midlands.
+First, some auxiliary values are defined, \sc{wholeYear} and \sc{summer}, each an interval between two days.
+Also \sc{wholeWeek} is defined, a sequence of all the Week Days.
+These will be used to define the Schedule of the Flight Template.
+
+The Flight Template describes Flights with code number BM1628, flying between Brussels Airport (BRU) and Charles de Gaulle Airport (CDG).
+The distance between the airports is 252 km.
+The Flights will happen with a Boeing 727 airplane, every Monday of the year at 9:55, every Friday during the summmer at 10:09.
+But not on January 6th and Christmas day (if they were a Monday or a Friday)
+An additional Flight is scheduled on December 24th.
+For every planned flight, the number of seats of each class and the price is also supplied (this information will be the same for all instances of the same recurring flight).
+
+Another small Flight Template describes Flights between Frankfurt Airport and Stockholm Airport on every Saturday of the year.
+
+\begin{lstlisting}
+// Flights
+
+val wholeYear = (1 January 2013) -> (31 December 2013)
+val summer = (21 June 2013) -> (21 September 2013)
+
+val wholeWeek = Monday -> Sunday
+
+// British Midlands
+FlightTemplate(BM, 1628)(BRU -> CDG, 252.km)(Boeing727) {
+  new Schedule()
+    .at(9 h 55, every(Monday) during wholeYear) {
+    Business -> (25.seats at 250.EUR);
+    Economy -> (110.seats at 150.EUR)
+  }.at(10 h 9, every(Friday) during summer) {
+    Business -> (30.seats at 300.EUR);
+    Economy -> (115.seats at 200.EUR)
+  }.except(6 January 2013, 25 December 2013)
+    .at(15 h 3, 24 December 2013) {
+    Business -> (20.seats at 400.EUR);
+    Economy -> (125.seats at 300.EUR)
+  }
+}
+
+FlightTemplate(BM, 2439)(FRA -> ARN, 1227.km)(Boeing737_800) {
+  new Schedule()
+    .at(4 h 23, every(Saturday) during wholeYear) {
+    Business -> (40.seats at 350.EUR);
+    Economy -> (120.seats at 250.EUR)
+  }
+}
+\end{lstlisting}
+
+Lastly, a Flight Template for SN Brussels Airports is defined between Brussels and Rome.
+The Flights happen every day of the week during the summer.
+
+\begin{lstlisting}
+// SN Brussels Airlines
+FlightTemplate(SN, 324)(BRU -> CIA, 1187.km)(AirbusA380) {
+  new Schedule()
+    .at(21 h 40, wholeWeek during summer) {
+    FirstClass -> (42.seats at 600.EUR);
+    SecondClass -> (102.seats at 325.EUR)
+    ThirdClass -> (500.seats at 287.EUR)
+  }
+}
+
+// End of the program
+\end{lstlisting}
+
+
 \section{Guide}
 \label{sec:guide}
 
