@@ -170,12 +170,18 @@ trait FlightDSL extends DelayedInit with DBDefinition {
 
   import DBDSL.Price
   implicit def currenctySyntax(amount: Int) = new {
-    def EUR: Price = BigDecimal(amount)
+    def EUR: Price = {
+      require(amount >= 0, "A price cannot be negative")
+      BigDecimal(amount)
+    }
   }
 
   implicit def seatsSyntax(nbOfSeats: Int) = new {
     def seats = new {
-      def at(price: Price): (Int, Price) = (nbOfSeats, price)
+      def at(price: Price): (Int, Price) = {
+        require(nbOfSeats >= 0, "The number of seats in a class cannot be negative")
+               (nbOfSeats, price)
+      }
     }
   }
 
@@ -282,6 +288,11 @@ trait FlightDSL extends DelayedInit with DBDefinition {
 
     def at(time: Time, dates: Seq[Date])(seats: (SeatType, (Int, Price))*): Schedule = {
       val seatMap = Map(seats:_*)
+      require(!seatMap.isEmpty, "The flight must at least have one type of seats")
+      val seatsPerType: Iterable[Int] = seatMap.values.map(_._1)
+      if (seatsPerType.exists(_ < 0))
+        argError("There cannot be a negative number of seats of a seat type")
+      require(seatsPerType.sum > 0, "A flight must have at least one seat")
       new Schedule(schedule ++ (dates map (date => (date toDateTime time, seatMap))))
     }
 

@@ -61,6 +61,7 @@ Assignment $^{\#}$2: Domain Specific Language}
 
 \tableofcontents
 
+\clearpage
 \section{Domain description}
 \label{sec:domain-description}
 
@@ -75,7 +76,7 @@ Assignment $^{\#}$2: Domain Specific Language}
 
 This section will reflect on the most important aspects of the problem domain.
 We will not discuss the entirety of the problem domain or everything described in the assignment.
-Only the important/changed parts are highlighted.
+Only the important or changed parts are highlighted.
 
 \begin{itemize}
 
@@ -91,17 +92,18 @@ Each code denotes a flight that recurs at the same time one or more days per wee
 \end{quote}
 
 So, for simplicity,  we decided to stick with just weekly recurring schedules.
-Note: it is still possible to express variations and exceptions (e.g.\ every Wednesday except in January or every Monday except on December 25th)! \\
+
+Note: it is still possible to express variations and exceptions (e.g.\ every Wednesday except in January or every Monday except on December 25th)! 
 
 \item Each seat is assigned to a price category (\field{SeatType}).
 Seats are priced individually, but prices fall into one of these categories.
 Price categories are determined in advance.
-However, a seat may change price category during a certain period (e.g.\ during high season).
+However, a seat may have a different price category during a certain period (e.g.\ during high season).
 
 \item The same flight can be serviced by multiple airplanes (even different airplane models).
-We decided to treat \field{Airplane}s, \field{AirplaneModel}s and airplane \field{Manufacturer}s as separate entities.\\
+We decided to treat \field{Airplane}s, \field{AirplaneModel}s and airplane \field{Manufacturer}s as separate entities.
 
-\item Code-sharing flights (multiple companies for one flight) can be ignored as stated by the domain expert.\\
+\item Code-sharing flights (multiple companies for one flight) can be ignored as stated by the domain expert.
 
 \item As hinted in the assignment, we decided to introduce the concept of a \field{FlightTemplate}.
 A \field{FlightTemplate} describes a set of \field{Flight}s on the same \field{Connection}, serviced by a certain \field{AirlineCompany} with a certain schedule.
@@ -109,24 +111,25 @@ The flight's code is also determined by the \field{FlightTemplate}.
 For example: all flights between Amsterdam and New York serviced by KLM. This \field{FlightTemplate} has the code KLM4753.
 The flights occur every Wednesday at 14:00, except from the 20th of December until the 5th of January.
 
-
-\item Flight details are available one year in advance. It is not necessary to generate flight data for an unlimited period of time (as stated by the domain expert).\\
+\item Flight details are available one year in advance. It is not necessary to generate flight data for an unlimited period of time (as stated by the domain expert).
 
 \item Only the insertion of data into the database needs to be supported by the DSL.
 Booking of flights and querying data is not part of our problem domain.
 We also assume every entity is described in the DSL file.
 No pre-existing entities are referred to.
 For example: it is not possible to refer to a country ``Belgium'' if that country is not declared in the DSL file (but exists in the database).
-We will not check everything that is already in the database before interpreting the DSL file.\\
+We will clear the database file every time the DSL gets executed.
+This is not very feasible in real life, of course. 
+Although, it will illustrate the solution in a clear fashion and decreases the work to do.
+%We will not check everything that is already in the database before interpreting the DSL file.
 
 \item The assignment states it should be possible to provide flight duration estimates.
 We decided not to explicitly describe flight durations in \field{Flight}, but to keep track of the airplane's average cruise speed in order to be able derive the flight duration.
 We assume the cruising speed is the most prominent factor that determines flight duration.
-This should provide a better estimate of the flight's duration, as a flight may be serviced by different airplane models.\\
-
+This should provide a better estimate of the flight's duration, as a flight may be serviced by different airplane models.
 
 \end{itemize}
-
+\clearpage
 \section{Domain analysis}
 \label{sec:domain-analysis}
 % A brief breakdown of the elements in your domain and how they relate to each other. This could be a formal meta-model, but could also be textual description.
@@ -162,8 +165,6 @@ The maximum number of seats that can be installed in the airplane model is store
 A \field{FlightTemplate} describes a set of \field{Flight}s on the same \field{Connection}, serviced by a certain \field{AirlineCompany} with a certain schedule.
 Each \field{FlightTemplate} is denoted by a unique code.
 The code consists of the airline company's code followed by 3 to 4 digits.
-An example: The \field{FlightTemplate} describing all flights between Amsterdam and Sydney serviced by KLM. This \field{FlightTemplate} has the code KLM4119.
-The flights occur every wednesday at 12:00PM, except from the 20th of December until the 5th of January.
 
 % TODO
 % recurs at the same time one or more
@@ -200,6 +201,7 @@ This means that two seats, both of the same seat type and both on flights that f
   \caption{Database Tables}\label{fig:database-tables}
 \end{figure}
 
+\clearpage
 \section{Design Description}
 \label{sec:design-description}
 
@@ -234,13 +236,14 @@ A possible alternative is to switch to manually generated IDs, but extra attenti
 We believe directly communicating with the database at run-time and retrieving the IDs after they were generated, is a more robust solution.
 
 
+\clearpage
 \section{Implementation Overview}
 \label{sec:implementation-overview}
 
 % A general overview of the implementation approach, including a description of the API upon which it is based and any tricky implementation techniques employed. Some justification of the chosen implementation language needs also to be provided.
 
 To implement the database functionality, we use the JDBC API. 
-The reason for this is because SQL scripts seem difficult to do, as discussed later on. %TODO link?
+The reason for this is because SQL scripts seem difficult to do, as discussed earlier. %TODO link?
 Also, the use of such an API is safer and more coherent.
 
 No loose strings have been used to insert sql statements into the database.
@@ -356,7 +359,7 @@ new Schedule()
 \end{lstlisting}
 
 The first line in the example defines an interval between the beginning of 2013 and the end of 2013, i.e.\ the year 2013.
-The Schedule that is defined states that every Monday of the year, a flight at five to ten in the morning with 25 business seats for 250 euros and 110 economy seats for 150 euros is planned, except on Christmas (if Christmas happened to fall on a Monday in 2013).
+The Schedule that is defined states that every Monday of the year, a flight at 5:00am to 10:00am with 25 business seats for 250 euros and 110 economy seats for 150 euros is planned, except on Christmas (if Christmas happened to fall on a Monday in 2013).
 An additional flight is added that flies on the 24th of December, but with higher prices.
 
 A Schedule object stores a sequence of moments when flights would occur, along with pricing information per seat class.
@@ -477,11 +480,13 @@ By defining separate case classes for these unit types instead of relying on the
 Of course, we could make it more extensible by defining a trait for speed, which \cc{KmH} and other classes like \cc{MpH} could implement, but this is a small change that could easily be made when necessary.
 
 
+\clearpage
 \section{DSL Implementation}
 \label{sec:dsl-implementation}
 
 % The code implementing your DSL and any libraries on which it is based.
 
+\clearpage
 \section{Example DSL program(s)}
 \label{sec:example-dsl-programs}
 
@@ -686,6 +691,7 @@ FlightTemplate(SN, 324)(BRU -> CIA, 1187.km)(AirbusA380) {
 \input{cheatsheet}
 
 
+\clearpage
 \section{Guide}
 \label{sec:guide}
 
