@@ -49,10 +49,11 @@
       <groupId>org.scalatest</groupId>
       <artifactId>scalatest_2.9.2</artifactId>
       <version>1.8</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   <build>
-    <sourceDirectory>test</sourceDirectory>
+    <sourceDirectory>src</sourceDirectory>
     <testSourceDirectory>test</testSourceDirectory>
     <plugins>
       <plugin>
