@@ -3,9 +3,7 @@ Text between < and > symbols denotes variables.
 Text between [ and ] denotes grouping of (optional) text. | symbolizes a logical or. * denotes repitition.
 example: [a|b|c]* denotes multiple a, b or c's (aa, aabc, \dots).
 
-\begin{itemize}
-
-\item[Date]
+\paragraph{Date}\hfill
 \begin{lstlisting}
 <DD Month YYYY>
 
@@ -13,7 +11,7 @@ example:
 val christmas = 25 December 2012
 \end{lstlisting}
 		
-\item[Date Ranges / periods]
+\paragraph{Date Ranges / periods}\hfill
 \begin{lstlisting}
 (<fromDate>) -> (<toDate>)
 
@@ -22,7 +20,7 @@ val wholeYear = (1 January 2012) -> (31 December 2012)
 val summer = (21 June 2012) -> (21 September 2012)
 \end{lstlisting}
 		
-\item[Time]
+\paragraph{Time}\hfill
 \begin{lstlisting}
 <hours> h <minutes>
 
@@ -30,7 +28,7 @@ example:
 val noon = 12 h 00
 \end{lstlisting}
 
-\item[Weekday]
+\paragraph{Weekday}\hfill
 \begin{lstlisting}
 <Weekday>
 
@@ -38,7 +36,7 @@ example:
 Monday
 \end{lstlisting}
 	    
-\item[Weekday Range]
+\paragraph{Weekday Range}\hfill
 \begin{lstlisting}
 <fromWeekday> -> <toWeekday>
 
@@ -47,7 +45,7 @@ val wholeWeek = Monday -> Sunday
 \end{lstlisting}
 
 	    
-\item[Weekly recurrences]
+\paragraph{Weekly recurrences}\hfill
 \begin{lstlisting}
 every(<Weekday>)
 
@@ -55,7 +53,7 @@ example:
 every(Monday)
 \end{lstlisting}
 	    
-\item[Weekly recurrences during period]
+\paragraph{Weekly recurrences during period}\hfill
 \begin{lstlisting}
 every(<Weekday>) during <period>
  
@@ -64,7 +62,7 @@ val summer = (21 June 2012) -> (21 September 2012)
 every(Monday) during summer
 \end{lstlisting}
 
-\item[Country] 
+\paragraph{Country}\hfill
 \begin{lstlisting}
 val <valName> = country("<countryName>")
 
@@ -73,7 +71,7 @@ val Belgium = country("Belgium")
 val Italy = country("Italy")
 \end{lstlisting}
 
-\item[City] 
+\paragraph{City}\hfill
 \begin{lstlisting}
 val <valName> = "<cityName>" in <country>
 
@@ -82,7 +80,7 @@ val Brussels = "Brussels" in Belgium
 val Rome = "Rome" in Italy
 \end{lstlisting}
 
-\item[Airport]
+\paragraph{Airport}\hfill
 \begin{lstlisting}
 val <valName> = ("<airportCode>","<airportName>") at <city>
    
@@ -91,7 +89,7 @@ val BRU = ("BRU", "Brussels Airport") at Brussels
 val CIA = ("CIA", "Rome Ciampino Airport") at Rome
 \end{lstlisting}
 
-\item[Manufacturer]
+\paragraph{Manufacturer}\hfill
 \begin{lstlisting}
 val <valName> = manufacturer("<manufacturer>")
 
@@ -99,7 +97,7 @@ example:
 val Airbus = manufacturer("Airbus")
 \end{lstlisting}
 
- \item[Airplane Model]
+ \paragraph{Airplane Model}\hfill
 \begin{lstlisting}
 val <valName> = "<modelName>" of <manufacturer> carries <nbOfSeats>.p flies <speedInKmph>.kmh
 
@@ -107,7 +105,7 @@ example:
 val AirbusA320 = "Airbus A320" of Airbus carries 150.p flies 828.kmh
 \end{lstlisting}
 
- \item[Seat Type]
+ \paragraph{Seat Type}\hfill
 \begin{lstlisting}
 val <valName> = seatType("<seatTypeName>")
 
@@ -115,21 +113,21 @@ example:
 val Business = seatType("Business")
 \end{lstlisting}
 
-\item[PricingScheme]
+\paragraph{PricingScheme}\hfill
 \begin{lstlisting}
  val <valName> = new PricingScheme {
 		<eventual helper methods>
 		[
 		val <schemeName>: PricingScheme ={
 			[
-			case(<seatType>, <date>, <price>) if <condition> =>
+			case(<seatType>, <date>, <price>) [if <condition>] =>
 			    <priceCalculation>
 			]*
 		      }
 		 ]*
 		val scheme = <schemeName> [
 			      [AndAlso|OrElse|AndThen] <otherSchemeName>
-				  ]
+				  ]*
 		}
 	
 example:
@@ -154,7 +152,7 @@ val KLMPricingScheme = new PricingScheme {
 	}
 \end{lstlisting}
 
-\item[Airline Company]
+\paragraph{Airline Company}\hfill
 \begin{lstlisting}
 val <valName> = company(<companyCode>, <companyName>, <pricingScheme>)
 
@@ -162,7 +160,7 @@ example:
 val KLM = company("KLM", "Koninklijke Luchtvaart Maatschappij", KLMPricingScheme)
 \end{lstlisting}
 	    
-\item[Schedule]
+\paragraph{Schedule}\hfill
 \begin{lstlisting}
 val <valName> = new Schedule()
 	[
@@ -188,12 +186,10 @@ val schedule =  new Schedule()
 		}
 \end{lstlisting}
 
-\item[Flight Template]
+\paragraph{Flight Template}\hfill
 \begin{lstlisting}
 FlightTemplate(<company>, <flightCode>)(<fromAirport> -> <toAirport>, <distance>.km)(<airplaneModel>){<schedule>}
 		
 example:
 FlightTemplate(KLM, 324)(BRU -> CIA, 1187.km)(AirbusA380){schedule}
 \end{lstlisting}
-
-\end{itemize}
