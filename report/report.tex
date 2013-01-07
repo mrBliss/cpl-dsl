@@ -326,27 +326,25 @@ A Flight is an instantiation of a Flight Template at a certain date and time.
 To generate Flights at certain points in time, a Schedule is used.
 A Schedule is defined through composition.
 Have a look at the following example:
-% \code{var x = 3 + 1}
 \begin{lstlisting}
-val wholeYear = (1 January 2012) -> (31 December 2012)
+val wholeYear = (1 January 2013) -> (31 December 2013)
 new Schedule()
  .at(9 h 55, every(Monday) during wholeYear) {
   Business -> (25.seats at 250.EUR);
   Economy -> (110.seats at 150.EUR)
-}.except(25 December 2012, 6 January 2013)
+}.except(6 January 2013, 25 December 2013)
  .at(15 h 3, 24 December 2012) {
   Business -> (20.seats at 400.EUR);
   Economy -> (125.seats at 300.EUR)
 }
 \end{lstlisting}
 
-The first line in the example defines an interval between the beginning of 2012 and the end of 2012, i.e.\ the year 2012.
-The Schedule that is defined states that every Monday of the year, a flight at five to ten in the morning with 25 business seats for 250 euros and 110 economy seats for 150 euros is planned, except on Christmas (if Christmas happened to fall on a Monday in 2012).
+The first line in the example defines an interval between the beginning of 2013 and the end of 2013, i.e.\ the year 2013.
+The Schedule that is defined states that every Monday of the year, a flight at five to ten in the morning with 25 business seats for 250 euros and 110 economy seats for 150 euros is planned, except on Christmas (if Christmas happened to fall on a Monday in 2013).
 An additional flight is added that flies on the 24th of December, but with higher prices.
 
 A Schedule object stores a sequence of moments when flights would occur, along with pricing information per seat class.
 Flight objects will be generated for every moment in the Schedule.
-
 
 To give maximum control over pricing information, we also introduced Pricing Schemes, which are Airline Company-specific.
 A Pricing Scheme consists of a partial function from Seat Type, Date, and Price to Price.
@@ -462,6 +460,6 @@ Of course, we could make it more extensible by defining a trait for speed, which
 
 %%% Local Variables:
 %%% mode: latex
-%%% ispell-local-dictionary: american
+%%% ispell-local-dictionary: "american"
 %%% TeX-master: t
 %%% End:
