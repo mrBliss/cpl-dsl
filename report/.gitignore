@@ -3,4 +3,6 @@
 *.pdf
 *.out
 *.toc
+*.bbl
+*.blg
 auto
