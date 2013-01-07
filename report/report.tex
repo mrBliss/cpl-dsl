@@ -80,7 +80,7 @@ Only the important or changed parts are highlighted.
 
 \begin{itemize}
 
-\item It is necessary to support flexible modeling of flight schedules AND pricing (exceptions for holidays, variations in pricing etc.).
+\item It is necessary to support flexible modeling of flight schedules AND pricing (exceptions for holidays, variations in pricing, etc.).
 It must be possible to express statements such as ``The flight occurs every Wednesday and Friday at 16:30 except in July and August'' and ``In December and January the prices are increased by 20\%''.
 We do assume flights have a recurring period of just one week (every Wednesday, every Monday,\dots).
 The question if longer types of recurring schedules had to be supported (every two weeks, monthly,\dots) was posed to the domain expert, but no answer was given.
@@ -91,25 +91,23 @@ Each code denotes a flight that recurs at the same time one or more days per wee
 (Some flight takes place on just one day per week, others a couple of days per week, others every day.)
 \end{quote}
 
-So, for simplicity,  we decided to stick with just weekly recurring schedules.
-
-Note: it is still possible to express variations and exceptions (e.g.\ every Wednesday except in January or every Monday except on December 25th)! 
+So, for simplicity, we decided to stick with just weekly recurring schedules.
+Note: it is still possible to express variations and exceptions (e.g.\ every Wednesday except in January or every Monday except on December 25th)!
 
 \item Each seat is assigned to a price category (\field{SeatType}).
 Seats are priced individually, but prices fall into one of these categories.
 Price categories are determined in advance.
 However, a seat may have a different price category during a certain period (e.g.\ during high season).
 
-\item The same flight can be serviced by multiple airplanes (even different airplane models).
-We decided to treat \field{Airplane}s, \field{AirplaneModel}s and airplane \field{Manufacturer}s as separate entities.
-
 \item Code-sharing flights (multiple companies for one flight) can be ignored as stated by the domain expert.
 
 \item As hinted in the assignment, we decided to introduce the concept of a \field{FlightTemplate}.
 A \field{FlightTemplate} describes a set of \field{Flight}s on the same \field{Connection}, serviced by a certain \field{AirlineCompany} with a certain schedule.
 The flight's code is also determined by the \field{FlightTemplate}.
-For example: all flights between Amsterdam and New York serviced by KLM. This \field{FlightTemplate} has the code KLM4753.
+For example: all flights between Amsterdam and New York serviced by KLM\@. This \field{FlightTemplate} has the code KLM4753.
 The flights occur every Wednesday at 14:00, except from the 20th of December until the 5th of January.
+
+\item Flights of the same \field{FlightTemplate} don't have to be serviced by the same Airplane Model.
 
 \item Flight details are available one year in advance. It is not necessary to generate flight data for an unlimited period of time (as stated by the domain expert).
 
@@ -118,15 +116,14 @@ Booking of flights and querying data is not part of our problem domain.
 We also assume every entity is described in the DSL file.
 No pre-existing entities are referred to.
 For example: it is not possible to refer to a country ``Belgium'' if that country is not declared in the DSL file (but exists in the database).
-We will clear the database file every time the DSL gets executed.
-This is not very feasible in real life, of course. 
-Although, it will illustrate the solution in a clear fashion and decreases the work to do.
-%We will not check everything that is already in the database before interpreting the DSL file.
+Data already present in the database is not accessible from within the DSL\@.
+The database is emptied every time the DSL gets executed.
+This is not very useful in real life, of course, but makes it easier to play with the DSL.
 
 \item The assignment states it should be possible to provide flight duration estimates.
-We decided not to explicitly describe flight durations in \field{Flight}, but to keep track of the airplane's average cruise speed in order to be able derive the flight duration.
+We decided not to explicitly describe flight durations in \field{Flight}, but to keep track of the airplane's average cruise speed and the distance of the flight in order to be able derive the flight duration.
 We assume the cruising speed is the most prominent factor that determines flight duration.
-This should provide a better estimate of the flight's duration, as a flight may be serviced by different airplane models.
+
 
 \end{itemize}
 \clearpage
@@ -207,8 +204,6 @@ This means that two seats, both of the same seat type and both on flights that f
 
 % A description of the semantic model underlying the DSL, along with a description of the constructs of your DSL.
 
-% A general overview of the implementation approach, including a description of the API upon which it is based and any tricky implementation techniques employed. Some justification of the chosen implementation language needs also to be provided.
-
 %% TODO Fix the text below
 
 Before a high-level walk through the implementation, we shall first describe the design behind our DSL.
@@ -219,7 +214,7 @@ The database is populated after all entities are defined and the required consis
 Communication with the database happens through \textsc{JDBC} (Java Database Connectivity).
 As we're using \textsc{JDBC}, we could support a whole host of different database types.
 Currently, we support SQLite (no extra setup required, as the database is stored in a file), which is also the default, and MySQL (one of the most popular database products).
-After running our DSL program, the database will contain the rows defined using the DSL.\@
+After running our DSL program, the database will contain the rows defined using the DSL\@.
 
 We first intended to generate SQL scripts that would insert the generated entities in the database when executed, but this proved to be difficult because of the following reason.
 Imagine we want to generate an \cc{INSERT} statement that would insert a new City in the database.
@@ -242,23 +237,6 @@ We believe directly communicating with the database at run-time and retrieving t
 
 % A general overview of the implementation approach, including a description of the API upon which it is based and any tricky implementation techniques employed. Some justification of the chosen implementation language needs also to be provided.
 
-To implement the database functionality, we use the JDBC API. 
-The reason for this is because SQL scripts seem difficult to do, as discussed earlier. %TODO link?
-Also, the use of such an API is safer and more coherent.
-
-No loose strings have been used to insert sql statements into the database.
-All SQL statements have to be prepared using the PreparedStatements class.
-Using loose strings to insert statement could introduce errors or make it possible to hack the database by, for example, SQL injection.
-
-To create such a PreparedStatement, a prepareStatement function has been written.
-The method expects a connection to the specific database, an SQLDataTypeMapper and an IDMap.
-The statement will be constructed like this:
-\begin{verbatim}
-val prepStr = "INSERT INTO %s (%s) VALUES (%s)"
-\end{verbatim}
-This string will then be formatted to fill in the placeholders with the right arguments.
-The SQLDataTypeMapper makes sure the defined types of Scala and the types of the SQL database are compatible.
-Afterwards, the string is prepared and executed using the prepareStatement method of Connection.
 \subsection{Implementation language}
 \label{sec:implementation-language}
 
@@ -280,7 +258,7 @@ Scala provides programmers with many useful building blocks for developing DSLs,
 \begin{itemize}
 \item \textbf{Implicits arguments and conversions}:
   Implicit arguments alleviate the need to pass around certain parameters, making the program less verbose and more intuitive to read (at times).
-  Implicit conversions provide an easy way to add functionality to existing classes, we used it mainly to add syntactic sugar (see Section~\ref{sec:implementation-syntax}).
+  Implicit conversions provide an easy way to add functionality to existing classes, we used it mainly to add syntactic sugar (see Section~\ref{sec:implementation-techniques}).
 \item \textbf{Operator syntax}:
   Scala supports the definition of operators just like methods, e.g.\ \sc{BRU -> CDG} is actually a method call.
   The dot and parentheses in a functional call can be omitted in certain circumstances, allowing more natural language-like syntax, e.g.\ \sc{"Brussels" in Belgium}.
@@ -294,11 +272,34 @@ Scala provides programmers with many useful building blocks for developing DSLs,
 We used Scala version 2.9.2 to implement our DSL.
 Although version 2.10, which includes many useful enhancements, was recently released, it (or at least a final version) wasn't available at the start of the assignment.
 Scala 2.10 has (experimental) support for macros, a very powerful and much wished-for tool for DSL designers.
-Implicit classes are also available in 2.10, which reduce the boilerplate required for some of the tricks described in Section~\ref{sec:implementation-syntax}.
+Implicit classes are also available in 2.10, which reduce the boilerplate required for some of the tricks described in Section~\ref{sec:implementation-techniques}.
 Another useful addition is the \cc{Dynamic} type: ``\sc{x.foo} becomes \sc{x.applyDynamic("foo")} if \sc{x}'s type does not define a \sc{foo}, but is a subtype of \cc{Dynamic}''.
 This trick, the equivalent of Ruby's \cc{method\_missing}, would be very useful to support extra syntax.
 In hindsight, our DSL could have been much \emph{prettier} if we used Scala 2.10, but because the final version was released only recently (January 4th) and because of time constraints, we chose to stick to the latest stable release, 2.9.2.
 
+
+\subsection{Used API}
+\label{sec:used-api}
+
+To implement the database functionality, we use the JDBC API, see Section~\ref{sec:design-description} for the motivation of this decision.
+Also, using a mature API is much safer and more robust than generating SQL scripts, which are essentially strings.
+JDBC already does a good job of bridging most differences between databases.
+We did not choose to build further upon existing Scala database libraries, like \href{http://slick.typesafe.com/}{Slick}, or \href{http://squeryl.org/}{Squeryl}, because the are in fact already DSLs.
+
+No loose strings have been used to insert SQL statements into the database.
+All SQL statements are created using the \cc{Prepared\-Statement} class.
+Constructing SQL statements from strings is a well-known source of bugs and vulnerability issues, i.e.\ SQL injection attacks.
+
+To create such a \cc{PreparedStatement}, a \sc{prepareStatement} method was defined.
+% TODO CONTINUE
+The method expects a connection to the specific database, an SQLDataTypeMapper and an IDMap.
+The statement will be constructed like this:
+\begin{verbatim}
+val prepStr = "INSERT INTO %s (%s) VALUES (%s)"
+\end{verbatim}
+This string will then be formatted to fill in the placeholders with the right arguments.
+The SQLDataTypeMapper makes sure the defined types of Scala and the types of the SQL database are compatible.
+Afterwards, the string is prepared and executed using the prepareStatement method of Connection.
 
 \subsection{General Implementation Overview}
 \label{sec:general-implementation-overview}
@@ -424,7 +425,7 @@ The static typing of Scala provides consistency of types.
 \label{sec:implementation-techniques}
 
 A pattern (or trick) we often used to add some syntactic sugar is the following.
-Suppose we want to define a city, Brussels for instance, in our DSL.\@
+Suppose we want to define a city, Brussels for instance, in our DSL\@.
 \cc{City} is a case class with the following definition:
 
 \sc{case class City(name: String, country: Country)}\ldots{}
@@ -610,11 +611,13 @@ val SN = company("SN", "SN Brussels Airlines", new PricingScheme {
   }
 
   val specialActionOnSecondClass: PricingScheme = {
-    case (SecondClass, date, price) if date.in(15 July 2013, 15 August 2013) => price - 50.EUR
+    case (SecondClass, date, price)
+      if date.in(15 July 2013, 15 August 2013) => price - 50.EUR
   }
 
   val backToSchool: PricingScheme = {
-    case (ThirdClass, date, price) if date.in(16 August 2013, 31 August 2013) => price - 10.EUR
+    case (ThirdClass, date, price)
+      if date.in(16 August 2013, 31 August 2013) => price - 10.EUR
   }
 
   val scheme = highSeason andAlso specialActionOnSecondClass andAlso backToSchool
@@ -695,9 +698,9 @@ FlightTemplate(SN, 324)(BRU -> CIA, 1187.km)(AirbusA380) {
 \section{Guide}
 \label{sec:guide}
 
-% to use A short description of how to compile and run your DSL and a guide to the structure of the submitted files.
+% A short description of how to compile and run your DSL and a guide to the structure of the submitted files.
 
-
+% TODO Thomas
 
 \end{document}
 
