@@ -104,10 +104,7 @@ We decided to treat \field{Airplane}s, \field{AirplaneModel}s and airplane \fiel
 \item Code-sharing flights (multiple companies for one flight) can be ignored as stated by the domain expert.\\
 
 \item As hinted in the assignment, we decided to introduce the concept of a \field{FlightTemplate}.
-A \field{FlightTemplate} describes a set of \field{Flight}s on the same \field{Connection}, serviced by a certain \field{AirlineCompany} with a certain schedule.
-The flight's code is also determined by the \field{FlightTemplate}.
-For example: all flights between Amsterdam and New York serviced by KLM. This \field{FlightTemplate} has the code KLM4753.
-The flights occur every wednesday at 14:00PM, except from the 20th ofDecember untill the 5th of January.
+For a description, see ~\ref{par: flighttemplate}. \\
 
 \item Flight details are available one year in advance. It is not necessary to generate flight data for an unlimited period of time (as stated by the domain expert).\\
 
@@ -115,8 +112,13 @@ The flights occur every wednesday at 14:00PM, except from the 20th ofDecember un
 Booking of flights and querying data is not part of our problem domain.
 We also assume every entity is described in the DSL file.
 No pre-existing entities are refered to.
-For example: it is not possible to refer to a country ``Belgium'' if that country is not declared in the DSL file (but exists in the database).
+For example: it is not possible to refer to a country ``Australia'' if that country is not declared in the DSL file (but exists in the database).
 We will not check everything that is already in the database before interpreting the DSL file.\\
+
+\item The assignment states it should be possible to provide flight duration estimates.
+We decided not to explicitly describe flight durations in \field{Flight}, but to keep track of the airplane's average cruise speed in order to be able derive the flight duration.
+We assume the cruising speed is the most prominent factor that determines flight duration.
+This should provide a better estimate of the flight's duration, as a flight may be serviced by different airplane models.\\
 
 
 \end{itemize}
@@ -133,9 +135,9 @@ We will not check everything that is already in the database before interpreting
 \paragraph{Country}
 A \field{Country} has a name and represents a sovereign nation.
 \paragraph{City}
-A \field{City} has a name and is located in a country.
+A \field{City} has a name and is located in a \field{Country}.
 \paragraph{Airport}
-An \field{Airport} is located in a city.
+An \field{Airport} is located in a \field{City}.
 It has a name and is uniquely identified by its 3 capital letter code.
 It is possible for a city to have multiple airports.
 \paragraph{Connection}
@@ -152,10 +154,12 @@ Only the name of the manufacturer is relevant in our domain.
 An \field{AirplaneModel} is manufactured by a manufacturer.
 It has a name and cruise speed.
 The maximum number of seats that can be installed in the airplane model is stored too.
-\paragraph{FlightTemplate}
-A \field{FlightTemplate} describes a template for flights.
-Each flight template is denoted by a code consisting of the airline code followed by 3 or 4 digits.
-Airline companies define flight templates for certain connections.
+\paragraph{FlightTemplate}\label{par: flighttemplate}
+A \field{FlightTemplate} describes a set of \field{Flight}s on the same \field{Connection}, serviced by a certain \field{AirlineCompany} with a certain schedule.
+Each \field{FlightTemplate} is denoted by a unique code.
+The code consists of the airline company's code followed by 3 to 4 digits.
+An example: The \field{FlightTemplate} describing all flights between Amsterdam and Sydney serviced by KLM. This \field{FlightTemplate} has the code KLM4119.
+The flights occur every wednesday at 12:00PM, except from the 20th of December until the 5th of January. 
 
 % TODO
 % recurs at the same time one or more
