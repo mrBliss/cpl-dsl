@@ -48,7 +48,7 @@
 % Put Scala code in \sc{THE_CODE}, the code will be syntax highlighted
 % Use \cc{..} for class names
 \renewcommand{\sc}[1]{\lstinline{#1}}
-
+\newcommand{\field}[1]{\emph{#1}}
 \begin{document}
 \selectlanguage{english}
 
@@ -73,7 +73,53 @@ Assignment $^{\#}$2: Domain Specific Language}
 % elke 1..* ipv 0..* in ons systeem
 % Each flight of a certain flight template happens with the same airplane model
 
-\newcommand{\field}[1]{\emph{#1}}
+This section will reflect on the most important aspects of the problem domain.
+We will not discuss the entirety of the problem domain or everything described in the assignment.
+Only the important/changed parts are highlighted.
+
+\begin{itemize}
+
+\item It is necessary to support flexible modeling of flight schedules AND pricing (exceptions for holidays, variations in pricing etc.).
+It must be possible to express statements such as ``The flight occurs every wednesday and friday at 16:30PM except from July to August'' and ``In December and January the prices are increased by 20\%''.
+We do assume flights have a recurring period of just one week (every wednesday, every monday,\dots).
+The question if longer types of recurring schedules had to be supported (every two weeks, monthly,\dots) was posed to the domain expert, but no answer was given.
+The assignment only describes weekly schedules:
+
+\begin{quote}
+Each code denotes a flight that recurs at the same time one or more days per week.
+(Some flight takes place on just one day per week, others a couple of days per week, others every day.)
+\end{quote}
+
+So, for simplicity,  we decided to stick with just weekly recurring schedules.
+Note: it is still possible to express variations and exceptions (e.g. every wednesday except in January or every monday except on December 25th)! \\
+
+\item Each seat is assigned to a price category (\field{SeatType}).
+Seats are priced individually, but prices fall into one of these categories.
+Price categories are determined in advance.
+However, a seat may change price category during a certain period (e.g. during high season).
+
+\item The same flight can be serviced by multiple airplanes (even different airplane models).
+We decided to treat \field{Airplane}s, \field{AirplaneModel}s and airplane \field{Manufacturer}s as seperate entities.\\
+
+\item Code-sharing flights (multiple companies for one flight) can be ignored as stated by the domain expert.\\
+
+\item As hinted in the assignment, we decided to introduce the concept of a \field{FlightTemplate}.
+A \field{FlightTemplate} describes a set of \field{Flight}s on the same \field{Connection}, serviced by a certain \field{AirlineCompany} with a certain schedule.
+The flight's code is also determined by the \field{FlightTemplate}.
+For example: all flights between Amsterdam and New York serviced by KLM. This \field{FlightTemplate} has the code KLM4753.
+The flights occur every wednesday at 14:00PM, except from the 20th ofDecember untill the 5th of January.
+
+\item Flight details are available one year in advance. It is not necessary to generate flight data for an unlimited period of time (as stated by the domain expert).\\
+
+\item Only the insertion of data into the database needs to be supported by the DSL.
+Booking of flights and querying data is not part of our problem domain.
+We also assume every entity is described in the DSL file.
+No pre-existing entities are refered to.
+For example: it is not possible to refer to a country ``Belgium'' if that country is not declared in the DSL file (but exists in the database).
+We will not check everything that is already in the database before interpreting the DSL file.\\
+
+
+\end{itemize}
 
 \section{Domain analysis}
 \label{sec:domain-analysis}
