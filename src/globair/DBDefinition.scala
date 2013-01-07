@@ -66,7 +66,6 @@ trait DBEntities {
 
     val key = autoInc("id")
     val row = columns("code_fromAirport" -> from, "code_toAirport" -> to, "distance" -> distance)
-    unique("code_fromAirport", "code_toAirport")
   }
 
   case class SeatType(name: String) extends Entity {
@@ -79,7 +78,6 @@ trait DBEntities {
     val key = autoInc("id")
     val row = columns("id_SeatType" -> seatType, "id_Flight" -> flight,
                       "price" -> price, "nbSeats" -> nbSeats)
-    unique("id_SeatType", "id_Flight")
   }
 
   case class Flight(template: FlightTemplate, dateTime: DateTime,
@@ -87,7 +85,6 @@ trait DBEntities {
     val key = autoInc("id")
     val row = columns("id_FlightTemplate" -> template, "dateTime" -> dateTime,
                       "id_AirplaneModel" -> airplaneModel)
-    unique("time")
   }
 
   case class AirplaneModel(name: String, cruiseSpeed: Double, maxNbOfSeats: Int,
@@ -113,7 +110,6 @@ trait DBEntities {
     val row = columns("code" -> code, "code_AirlineCompany" -> company,
                       "id_Connection" -> connection)
 
-    unique("code", "code_AirlineCompany")
   }
 
 }
