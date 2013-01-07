@@ -13,6 +13,6 @@ clean:
 	mvn clean
 
 test:
-	mvn scalatest:test
+	mvn test-compile scalatest:test
 
 .PHONY: run jar clean test

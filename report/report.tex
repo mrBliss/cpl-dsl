@@ -80,8 +80,8 @@ Only the important/changed parts are highlighted.
 \begin{itemize}
 
 \item It is necessary to support flexible modeling of flight schedules AND pricing (exceptions for holidays, variations in pricing etc.).
-It must be possible to express statements such as ``The flight occurs every wednesday and friday at 16:30PM except from July to August'' and ``In December and January the prices are increased by 20\%''.
-We do assume flights have a recurring period of just one week (every wednesday, every monday,\dots).
+It must be possible to express statements such as ``The flight occurs every Wednesday and Friday at 16:30 except in July and August'' and ``In December and January the prices are increased by 20\%''.
+We do assume flights have a recurring period of just one week (every Wednesday, every Monday,\dots).
 The question if longer types of recurring schedules had to be supported (every two weeks, monthly,\dots) was posed to the domain expert, but no answer was given.
 The assignment only describes weekly schedules:
 
@@ -91,28 +91,32 @@ Each code denotes a flight that recurs at the same time one or more days per wee
 \end{quote}
 
 So, for simplicity,  we decided to stick with just weekly recurring schedules.
-Note: it is still possible to express variations and exceptions (e.g. every wednesday except in January or every monday except on December 25th)! \\
+Note: it is still possible to express variations and exceptions (e.g.\ every Wednesday except in January or every Monday except on December 25th)! \\
 
 \item Each seat is assigned to a price category (\field{SeatType}).
 Seats are priced individually, but prices fall into one of these categories.
 Price categories are determined in advance.
-However, a seat may change price category during a certain period (e.g. during high season).
+However, a seat may change price category during a certain period (e.g.\ during high season).
 
 \item The same flight can be serviced by multiple airplanes (even different airplane models).
-We decided to treat \field{Airplane}s, \field{AirplaneModel}s and airplane \field{Manufacturer}s as seperate entities.\\
+We decided to treat \field{Airplane}s, \field{AirplaneModel}s and airplane \field{Manufacturer}s as separate entities.\\
 
 \item Code-sharing flights (multiple companies for one flight) can be ignored as stated by the domain expert.\\
 
 \item As hinted in the assignment, we decided to introduce the concept of a \field{FlightTemplate}.
-For a description, see ~\ref{par: flighttemplate}. \\
+A \field{FlightTemplate} describes a set of \field{Flight}s on the same \field{Connection}, serviced by a certain \field{AirlineCompany} with a certain schedule.
+The flight's code is also determined by the \field{FlightTemplate}.
+For example: all flights between Amsterdam and New York serviced by KLM. This \field{FlightTemplate} has the code KLM4753.
+The flights occur every Wednesday at 14:00, except from the 20th of December until the 5th of January.
+
 
 \item Flight details are available one year in advance. It is not necessary to generate flight data for an unlimited period of time (as stated by the domain expert).\\
 
 \item Only the insertion of data into the database needs to be supported by the DSL.
 Booking of flights and querying data is not part of our problem domain.
 We also assume every entity is described in the DSL file.
-No pre-existing entities are refered to.
-For example: it is not possible to refer to a country ``Australia'' if that country is not declared in the DSL file (but exists in the database).
+No pre-existing entities are referred to.
+For example: it is not possible to refer to a country ``Belgium'' if that country is not declared in the DSL file (but exists in the database).
 We will not check everything that is already in the database before interpreting the DSL file.\\
 
 \item The assignment states it should be possible to provide flight duration estimates.
@@ -159,7 +163,7 @@ A \field{FlightTemplate} describes a set of \field{Flight}s on the same \field{C
 Each \field{FlightTemplate} is denoted by a unique code.
 The code consists of the airline company's code followed by 3 to 4 digits.
 An example: The \field{FlightTemplate} describing all flights between Amsterdam and Sydney serviced by KLM. This \field{FlightTemplate} has the code KLM4119.
-The flights occur every wednesday at 12:00PM, except from the 20th of December until the 5th of January. 
+The flights occur every wednesday at 12:00PM, except from the 20th of December until the 5th of January.
 
 % TODO
 % recurs at the same time one or more
@@ -196,15 +200,62 @@ This means that two seats, both of the same seat type and both on flights that f
   \caption{Database Tables}\label{fig:database-tables}
 \end{figure}
 
-\section{Design \& Implementation}
-\label{sec:implementation-overview}
+\section{Design Description}
+\label{sec:design-description}
 
 % A description of the semantic model underlying the DSL, along with a description of the constructs of your DSL.
 
 % A general overview of the implementation approach, including a description of the API upon which it is based and any tricky implementation techniques employed. Some justification of the chosen implementation language needs also to be provided.
 
-TODO API
+%% TODO Fix the text below
 
+Before a high-level walk through the implementation, we shall first describe the design behind our DSL.
+The idea is to define Cities, Airports, Flights, \ldots{} using an easy to use and intuitive syntax.
+All defined \emph{entities} will then be stored in a database.
+Flight entities are generated from FlightTemplates using a \cc{Schedule} and a \cc{Pricing\-Scheme} (more about these later).
+The database is populated after all entities are defined and the required consistency checks are performed.
+Communication with the database happens through \textsc{JDBC} (Java Database Connectivity).
+As we're using \textsc{JDBC}, we could support a whole host of different database types.
+Currently, we support SQLite (no extra setup required, as the database is stored in a file), which is also the default, and MySQL (one of the most popular database products).
+After running our DSL program, the database will contain the rows defined using the DSL.\@
+
+We first intended to generate SQL scripts that would insert the generated entities in the database when executed, but this proved to be difficult because of the following reason.
+Imagine we want to generate an \cc{INSERT} statement that would insert a new City in the database.
+A City consists of a name of type String, and a country of type Country, which is another entity (or table).
+In the database table, the country field of the City table is defined as a foreign key that references the Country table via Country's primary key (an auto-generated ID).
+How would such an \cc{INSERT} statement then look like?
+
+\cc{INSERT INTO City (name, id\_Country) VALUES ("Brussels", ?)}
+
+Which value should come in the place of the question mark?
+
+The right thing to do, would be to insert the value of the auto-generated ID of the row representing Belgium in the Country table, but we don't know the value of this ID, as we haven't inserted Belgium it in the database yet.
+A possible alternative is to switch to manually generated IDs, but extra attention would have to be paid to prevent conflicts with existing IDs.
+We believe directly communicating with the database at run-time and retrieving the IDs after they were generated, is a more robust solution.
+
+
+\section{Implementation Overview}
+\label{sec:implementation-overview}
+
+% A general overview of the implementation approach, including a description of the API upon which it is based and any tricky implementation techniques employed. Some justification of the chosen implementation language needs also to be provided.
+
+To implement the database functionality, we use the JDBC API. 
+The reason for this is because SQL scripts seem difficult to do, as discussed later on. %TODO link?
+Also, the use of such an API is safer and more coherent.
+
+No loose strings have been used to insert sql statements into the database.
+All SQL statements have to be prepared using the PreparedStatements class.
+Using loose strings to insert statement could introduce errors or make it possible to hack the database by, for example, SQL injection.
+
+To create such a PreparedStatement, a prepareStatement function has been written.
+The method expects a connection to the specific database, an SQLDataTypeMapper and an IDMap.
+The statement will be constructed like this:
+\begin{verbatim}
+val prepStr = "INSERT INTO %s (%s) VALUES (%s)"
+\end{verbatim}
+This string will then be formatted to fill in the placeholders with the right arguments.
+The SQLDataTypeMapper makes sure the defined types of Scala and the types of the SQL database are compatible.
+Afterwards, the string is prepared and executed using the prepareStatement method of Connection.
 \subsection{Implementation language}
 \label{sec:implementation-language}
 
@@ -245,34 +296,6 @@ Another useful addition is the \cc{Dynamic} type: ``\sc{x.foo} becomes \sc{x.app
 This trick, the equivalent of Ruby's \cc{method\_missing}, would be very useful to support extra syntax.
 In hindsight, our DSL could have been much \emph{prettier} if we used Scala 2.10, but because the final version was released only recently (January 4th) and because of time constraints, we chose to stick to the latest stable release, 2.9.2.
 
-\subsection{Design Description}
-\label{sec:design-description}
-
-
-Before a high-level walk through the implementation, we shall first describe the design behind our DSL.
-The idea is to define Cities, Airports, Flights, \ldots{} using an easy to use and intuitive syntax.
-All defined \emph{entities} will then be stored in a database.
-Flight entities are generated from FlightTemplates using a \cc{Schedule} and a \cc{Pricing\-Scheme} (more about these later).
-The database is populated after all entities are defined and the required consistency checks are performed.
-Communication with the database happens through \textsc{JDBC} (Java Database Connectivity).
-As we're using \textsc{JDBC}, we could support a whole host of different database types.
-Currently, we support SQLite (no extra setup required, as the database is stored in a file), which is also the default, and MySQL (one of the most popular database products).
-After running our DSL program, the database will contain the rows defined using the DSL.\@
-% TODO import tables?
-
-We first intended to generate SQL scripts that would insert the generated entities in the database when executed, but this proved to be difficult because of the following reason.
-Imagine we want to generate an \cc{INSERT} statement that would insert a new City in the database.
-A City consists of a name of type String, and a country of type Country, which is another entity (or table).
-In the database table, the country field of the City table is defined as a foreign key that references the Country table via Country's primary key (an auto-generated ID).
-How would such an \cc{INSERT} statement then look like?
-
-\cc{INSERT INTO City (name, id\_Country) VALUES ("Brussels", ?)}
-
-Which value should come in the place of the question mark?
-
-The right thing to do, would be to insert the value of the auto-generated ID of the row representing Belgium in the Country table, but we don't know the value of this ID, as we haven't inserted Belgium it in the database yet.
-A possible alternative is to switch to manually generated IDs, but extra attention would have to be paid to prevent conflicts with existing IDs.
-We believe directly communicating with the database at run-time and retrieving the IDs after they were generated, is a more robust solution.
 
 \subsection{General Implementation Overview}
 \label{sec:general-implementation-overview}
@@ -319,27 +342,25 @@ A Flight is an instantiation of a Flight Template at a certain date and time.
 To generate Flights at certain points in time, a Schedule is used.
 A Schedule is defined through composition.
 Have a look at the following example:
-% \code{var x = 3 + 1}
 \begin{lstlisting}
-val wholeYear = (1 January 2012) -> (31 December 2012)
+val wholeYear = (1 January 2013) -> (31 December 2013)
 new Schedule()
  .at(9 h 55, every(Monday) during wholeYear) {
   Business -> (25.seats at 250.EUR);
   Economy -> (110.seats at 150.EUR)
-}.except(25 December 2012, 6 January 2013)
+}.except(6 January 2013, 25 December 2013)
  .at(15 h 3, 24 December 2012) {
   Business -> (20.seats at 400.EUR);
   Economy -> (125.seats at 300.EUR)
 }
 \end{lstlisting}
 
-The first line in the example defines an interval between the beginning of 2012 and the end of 2012, i.e.\ the year 2012.
-The Schedule that is defined states that every Monday of the year, a flight at five to ten in the morning with 25 business seats for 250 euros and 110 economy seats for 150 euros is planned, except on Christmas (if Christmas happened to fall on a Monday in 2012).
+The first line in the example defines an interval between the beginning of 2013 and the end of 2013, i.e.\ the year 2013.
+The Schedule that is defined states that every Monday of the year, a flight at five to ten in the morning with 25 business seats for 250 euros and 110 economy seats for 150 euros is planned, except on Christmas (if Christmas happened to fall on a Monday in 2013).
 An additional flight is added that flies on the 24th of December, but with higher prices.
 
 A Schedule object stores a sequence of moments when flights would occur, along with pricing information per seat class.
 Flight objects will be generated for every moment in the Schedule.
-
 
 To give maximum control over pricing information, we also introduced Pricing Schemes, which are Airline Company-specific.
 A Pricing Scheme consists of a partial function from Seat Type, Date, and Price to Price.
@@ -373,8 +394,8 @@ We believe Pricing Schemes give users enough control over flight pricing.
 Of course, additional input parameters could be added, like the Airplane Model or the time of departure, but such changes require only little work.
 Users that wish not to use Pricing Schemes can provide a simple fall-through Pricing Scheme that doesn't influence the price at all.
 
-\subsection{Syntax}
-\label{sec:implementation-syntax}
+\subsection{Implementations Techniques}
+\label{sec:implementation-techniques}
 
 A pattern (or trick) we often used to add some syntactic sugar is the following.
 Suppose we want to define a city, Brussels for instance, in our DSL.\@
@@ -433,7 +454,6 @@ By defining separate case classes for these unit types instead of relying on the
 Of course, we could make it more extensible by defining a trait for speed, which \cc{KmH} and other classes like \cc{MpH} could implement, but this is a small change that could easily be made when necessary.
 
 
-
 \section{DSL Implementation}
 \label{sec:dsl-implementation}
 
@@ -444,10 +464,204 @@ Of course, we could make it more extensible by defining a trait for speed, which
 
 % Some example DSL programs to illustrate how your DSL is to be used.
 
+We shall now walk through an example DSL program in its entirety.
+Code fragments will be interleaved with descriptive comments.
+The complete example can also be found in the submitted source code.
+
+
+We start with the definition of the \cc{Example} object.
+To have access to the DSL functionality, it must extend the \cc{FlightDSL} trait.
+Also, by mixing-in the SQLitePopulator trait, the user declares that he wishes to use an SQLite database.
+Auxiliary methods are imported from the \cc{Date}, \cc{Month}, and \cc{WeekDay} objects.
+Finally, a JDBC string that declares how the program should connnect to the database, called \cc{test.db}, is defined.
+
+\begin{lstlisting}
+package globair
+object Example extends FlightDSL with SQLitePopulator {
+  import Date._
+  import Month._
+  import WeekDay._
+
+  val dbName = "jdbc:sqlite:test.db"
+\end{lstlisting}
+
+Next, Countries, Cities, Airports, Manufacturers, and Airplane Models are defined.
+The Airport and Airplane Model values will be used later on in the example.
+
+\begin{lstlisting}
+// Countries
+val Belgium = country("Belgium")
+val France = country("France")
+val Germany = country("Germany")
+val Italy = country("Italy")
+val Sweden = country("Sweden")
+
+// Cities
+val Brussels = "Brussels" in Belgium
+val Paris = "Paris" in France
+val Frankfurt = "Frankfurt" in Germany
+val Rome = "Rome" in Italy
+val Stockholm = "Stockholm" in Sweden
+
+// Airports
+val BRU = ("BRU", "Brussels Airport") at Brussels
+val CDG = ("CDG", "Charles de Gaulle Airport") at Paris
+val FRA = ("FRA", "Frankfurst am Main Airport") at Frankfurt
+val CIA = ("CIA", "Rome Ciampino Airport") at Rome
+val ARN = ("ARN", "Stockholm Arlanda Airport") at Stockholm
+
+// Manufacturers
+val Airbus = manufacturer("Airbus")
+val Boeing = manufacturer("Boeing")
+
+// Airplane Models
+val AirbusA380 = "Airbus A380" of Airbus carries 644.p flies 945.kmh
+val Boeing727 = "Boeing 727" of Boeing carries 145.p flies 963.kmh
+val Boeing737_800 = "Boeing 737-800" of Boeing carries 160.p flies 828.kmh
+\end{lstlisting}
+
+Two divisions of Seat Types are then defined.
+Some Airline Companies will have Business and Economy seats, others will divide the seats into three classes.
+Multiple Airline Companies are allowed to share the same Seat Types.
+Only two kinds of divisions were defined for the example, in \emph{reality}, more hierarchies would be defined, possibly with names specific to the Airline Company.
+
+\begin{lstlisting}
+// Two kinds of seats: Business and Economy
+val Business = seatType("Business")
+val Economy = seatType("Economy")
+
+// Three kinds of seats: First, Second, and Third Class
+val FirstClass = seatType("First Class")
+val SecondClass = seatType("Second Class")
+val ThirdClass = seatType("Third Class")
+\end{lstlisting}
+
+What follows is the definition of an Airline Company value for British Midlands.
+The definition of an Airline Company includes the definition of its Pricing Scheme.
+First, a local helper function is defined to determine whether a \cc{Date} lies in the high season, which is defined from the first day of July to the last day of August and from December 15th to March 31st the next year.
+The Pricing Scheme consists of a single partial function, called \cc{highSeason}, which should be read as follows.
+The price for Business seats is raised by 10\% in the high season.
+The price for Economy seats is raised by 5\% in the high season.
+
+\begin{lstlisting}
+// Airline Companies (the code is the official IATA code)
+val BM = company("BM", "British Midlands Airways",
+                 new PricingScheme {
+
+  def inHighSeason(date: Date): Boolean =
+    date.in(1 July 2013, 31 August 2013) ||
+    date.in(15 December 2013, 31 March 2014)
+
+  val highSeason: PricingScheme = {
+    case (Business, date, price) if inHighSeason(date)
+      => price * 1.1
+    case (Economy, date, price) if inHighSeason(date)
+      => price * 1.05
+  }
+
+  val scheme = highSeason
+})
+\end{lstlisting}
+
+Another Airline Company is defined, SN Brussels Airlines.
+Its Pricing Scheme should be read as follows.
+The price of flights in the summer is raised by 10\%.
+There is also a special action on second class seats from July 15th to August 15th, during which a 50 euro discount applies.
+SN Brussels Airlines also has another special action, called Back to School from August 16th to the end of August, during which a 10 euro discount on third class seats applies.
+The \sc{scheme} definition at the end, states that first the \cc{highSeason} partial function is applied, then \cc{special\-Action\-On\-Second\-Class}, and finally \cc{backToSchool}.
+Note that we use \sc{andAlso} to compose the partial functions, which applies both the first and the second partial function, even if the first didn't match, unlike \sc{andThen}.
+
+\begin{lstlisting}
+val SN = company("SN", "SN Brussels Airlines", new PricingScheme {
+
+  def inSummer(date: Date): Boolean =
+    date.in(21 June 2013, 21 September 2013)
+
+  val highSeason: PricingScheme = {
+    case (_, date, price) if inSummer(date) => price * 1.1
+  }
+
+  val specialActionOnSecondClass: PricingScheme = {
+    case (SecondClass, date, price) if date.in(15 July 2013, 15 August 2013) => price - 50.EUR
+  }
+
+  val backToSchool: PricingScheme = {
+    case (ThirdClass, date, price) if date.in(16 August 2013, 31 August 2013) => price - 10.EUR
+  }
+
+  val scheme = highSeason andAlso specialActionOnSecondClass andAlso backToSchool
+})
+\end{lstlisting}
+
+Now follows the definition of a Flight Template for British Midlands.
+First, some auxiliary values are defined, \sc{wholeYear} and \sc{summer}, each an interval between two days.
+Also \sc{wholeWeek} is defined, a sequence of all the Week Days.
+These will be used to define the Schedule of the Flight Template.
+
+The Flight Template describes Flights with code number BM1628, flying between Brussels Airport (BRU) and Charles de Gaulle Airport (CDG).
+The distance between the airports is 252 km.
+The Flights will happen with a Boeing 727 airplane, every Monday of the year at 9:55, every Friday during the summmer at 10:09.
+But not on January 6th and Christmas day (if they were a Monday or a Friday)
+An additional Flight is scheduled on December 24th.
+For every planned flight, the number of seats of each class and the price is also supplied (this information will be the same for all instances of the same recurring flight).
+
+Another small Flight Template describes Flights between Frankfurt Airport and Stockholm Airport on every Saturday of the year.
+
+\begin{lstlisting}
+// Flights
+
+val wholeYear = (1 January 2013) -> (31 December 2013)
+val summer = (21 June 2013) -> (21 September 2013)
+
+val wholeWeek = Monday -> Sunday
+
+// British Midlands
+FlightTemplate(BM, 1628)(BRU -> CDG, 252.km)(Boeing727) {
+  new Schedule()
+    .at(9 h 55, every(Monday) during wholeYear) {
+    Business -> (25.seats at 250.EUR);
+    Economy -> (110.seats at 150.EUR)
+  }.at(10 h 9, every(Friday) during summer) {
+    Business -> (30.seats at 300.EUR);
+    Economy -> (115.seats at 200.EUR)
+  }.except(6 January 2013, 25 December 2013)
+    .at(15 h 3, 24 December 2013) {
+    Business -> (20.seats at 400.EUR);
+    Economy -> (125.seats at 300.EUR)
+  }
+}
+
+FlightTemplate(BM, 2439)(FRA -> ARN, 1227.km)(Boeing737_800) {
+  new Schedule()
+    .at(4 h 23, every(Saturday) during wholeYear) {
+    Business -> (40.seats at 350.EUR);
+    Economy -> (120.seats at 250.EUR)
+  }
+}
+\end{lstlisting}
+
+Lastly, a Flight Template for SN Brussels Airports is defined between Brussels and Rome.
+The Flights happen every day of the week during the summer.
+
+\begin{lstlisting}
+// SN Brussels Airlines
+FlightTemplate(SN, 324)(BRU -> CIA, 1187.km)(AirbusA380) {
+  new Schedule()
+    .at(21 h 40, wholeWeek during summer) {
+    FirstClass -> (42.seats at 600.EUR);
+    SecondClass -> (102.seats at 325.EUR)
+    ThirdClass -> (500.seats at 287.EUR)
+  }
+}
+
+// End of the program
+\end{lstlisting}
+
 \section{DSL Cheat sheet}
 \label{sec: cheat-sheet}
 
 \input{cheatsheet}
+
 
 \section{Guide}
 \label{sec:guide}
@@ -461,6 +675,6 @@ Of course, we could make it more extensible by defining a trait for speed, which
 
 %%% Local Variables:
 %%% mode: latex
-%%% ispell-local-dictionary: american
+%%% ispell-local-dictionary: "american"
 %%% TeX-master: t
 %%% End:
