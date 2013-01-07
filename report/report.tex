@@ -206,26 +206,8 @@ This means that two seats, both of the same seat type and both on flights that f
 % A description of the semantic model underlying the DSL, along with a description of the constructs of your DSL.
 
 % A general overview of the implementation approach, including a description of the API upon which it is based and any tricky implementation techniques employed. Some justification of the chosen implementation language needs also to be provided.
-To implement the database functionality, we use the JDBC API. 
-The reason for this is because SQL scripts seem difficult to do, as discussed later on. %TODO link?
-Also, the use of such an API is safer and more coherent.
 
-No loose strings have been used to insert sql statements into the database.
-All SQL statements have to be prepared using the PreparedStatements class.
-Using loose strings to inset statement could introduce errors or make it possible to hack the database by, for example, SQL injection.
-
-To create such a PreparedStatement, a prepareStatement function has been written.
-The method expects a connection to the specific database, an SQLDataTypeMapper and an IDMap.
-The statement will be constructed like this:
-\begin{verbatim}
-val prepStr = "INSERT INTO %s (%s) VALUES (%s)"
-\end{verbatim}
-This string will then be formatted to fill in the placeholders with the right arguments.
-The SQLDataTypeMapper makes sure the defined types of Scala and the types of the SQL database are compatible.
-Afterwards, the string is prepared and executed using the prepareStatement method of Connection.
-
-
-%% Fix the text below
+%% TODO Fix the text below
 
 Before a high-level walk through the implementation, we shall first describe the design behind our DSL.
 The idea is to define Cities, Airports, Flights, \ldots{} using an easy to use and intuitive syntax.
@@ -257,9 +239,23 @@ We believe directly communicating with the database at run-time and retrieving t
 
 % A general overview of the implementation approach, including a description of the API upon which it is based and any tricky implementation techniques employed. Some justification of the chosen implementation language needs also to be provided.
 
+To implement the database functionality, we use the JDBC API. 
+The reason for this is because SQL scripts seem difficult to do, as discussed later on. %TODO link?
+Also, the use of such an API is safer and more coherent.
 
-TODO API
+No loose strings have been used to insert sql statements into the database.
+All SQL statements have to be prepared using the PreparedStatements class.
+Using loose strings to insert statement could introduce errors or make it possible to hack the database by, for example, SQL injection.
 
+To create such a PreparedStatement, a prepareStatement function has been written.
+The method expects a connection to the specific database, an SQLDataTypeMapper and an IDMap.
+The statement will be constructed like this:
+\begin{verbatim}
+val prepStr = "INSERT INTO %s (%s) VALUES (%s)"
+\end{verbatim}
+This string will then be formatted to fill in the placeholders with the right arguments.
+The SQLDataTypeMapper makes sure the defined types of Scala and the types of the SQL database are compatible.
+Afterwards, the string is prepared and executed using the prepareStatement method of Connection.
 \subsection{Implementation language}
 \label{sec:implementation-language}
 
