@@ -394,6 +394,29 @@ We believe Pricing Schemes give users enough control over flight pricing.
 Of course, additional input parameters could be added, like the Airplane Model or the time of departure, but such changes require only little work.
 Users that wish not to use Pricing Schemes can provide a simple fall-through Pricing Scheme that doesn't influence the price at all.
 
+\subsection{Consistency checks}
+\label{sec:consistency-checks}
+The following consistency checks are made before data is stored in the database:
+
+\begin{itemize}
+ \item Date and Time must be valid (0<hours<24, 0<minutes<60, \dots). Some of these checks are done by the Joda-Time library.
+ \item The number of seats that gets assigned a price cannot exceed the number of seats on the flight (the number of seats on the airplane model servicing the flight).
+ \item The code of a flight must be unique.
+ \item A flight template must generate at least one flight.
+ \item An airport code must consist of 3 capital letters.
+ \item An airline company code must consist of 2 to 3 capital letters.
+ \item A flight number must consist of 3 to 4 digits.
+ \item The departure and arrival airports of a connection must be different (you cannot fly to the same airport).
+ \item The total number of seats on a flight must be at least one.
+ \item There must be at least one seat type on a flight.
+ \item The number of seats assigned to a seat type must be at least one.
+ \item The price of a seat cannot be negative.
+ \item The number of passengers an airplane can carry cannot be negative.
+ \item The cruise speed of an airplane must be larger than zero km/h.
+\end{itemize}
+
+The static typing of Scala provides consistency of types.
+
 \subsection{Implementations Techniques}
 \label{sec:implementation-techniques}
 
