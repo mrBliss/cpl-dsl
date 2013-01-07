@@ -192,12 +192,43 @@ This means that two seats, both of the same seat type and both on flights that f
   \caption{Database Tables}\label{fig:database-tables}
 \end{figure}
 
-\section{Design \& Implementation}
-\label{sec:implementation-overview}
+\section{Design Description}
+\label{sec:design-description}
 
 % A description of the semantic model underlying the DSL, along with a description of the constructs of your DSL.
 
+% TODO mention: domain model stores the airplane model per flight, DSL defines airplane model per flight template
+
+Before a high-level walk through the implementation, we shall first describe the design behind our DSL.
+The idea is to define Cities, Airports, Flights, \ldots{} using an easy to use and intuitive syntax.
+All defined \emph{entities} will then be stored in a database.
+Flight entities are generated from FlightTemplates using a \cc{Schedule} and a \cc{Pricing\-Scheme} (more about these later).
+The database is populated after all entities are defined and the required consistency checks are performed.
+Communication with the database happens through \textsc{JDBC} (Java Database Connectivity).
+As we're using \textsc{JDBC}, we could support a whole host of different database types.
+Currently, we support SQLite (no extra setup required, as the database is stored in a file), which is also the default, and MySQL (one of the most popular database products).
+After running our DSL program, the database will contain the rows defined using the DSL.\@
+
+We first intended to generate SQL scripts that would insert the generated entities in the database when executed, but this proved to be difficult because of the following reason.
+Imagine we want to generate an \cc{INSERT} statement that would insert a new City in the database.
+A City consists of a name of type String, and a country of type Country, which is another entity (or table).
+In the database table, the country field of the City table is defined as a foreign key that references the Country table via Country's primary key (an auto-generated ID).
+How would such an \cc{INSERT} statement then look like?
+
+\cc{INSERT INTO City (name, id\_Country) VALUES ("Brussels", ?)}
+
+Which value should come in the place of the question mark?
+
+The right thing to do, would be to insert the value of the auto-generated ID of the row representing Belgium in the Country table, but we don't know the value of this ID, as we haven't inserted Belgium it in the database yet.
+A possible alternative is to switch to manually generated IDs, but extra attention would have to be paid to prevent conflicts with existing IDs.
+We believe directly communicating with the database at run-time and retrieving the IDs after they were generated, is a more robust solution.
+
+
+\section{Implementation Overview}
+\label{sec:implementation-overview}
+
 % A general overview of the implementation approach, including a description of the API upon which it is based and any tricky implementation techniques employed. Some justification of the chosen implementation language needs also to be provided.
+
 
 TODO API
 
@@ -241,34 +272,6 @@ Another useful addition is the \cc{Dynamic} type: ``\sc{x.foo} becomes \sc{x.app
 This trick, the equivalent of Ruby's \cc{method\_missing}, would be very useful to support extra syntax.
 In hindsight, our DSL could have been much \emph{prettier} if we used Scala 2.10, but because the final version was released only recently (January 4th) and because of time constraints, we chose to stick to the latest stable release, 2.9.2.
 
-\subsection{Design Description}
-\label{sec:design-description}
-
-
-Before a high-level walk through the implementation, we shall first describe the design behind our DSL.
-The idea is to define Cities, Airports, Flights, \ldots{} using an easy to use and intuitive syntax.
-All defined \emph{entities} will then be stored in a database.
-Flight entities are generated from FlightTemplates using a \cc{Schedule} and a \cc{Pricing\-Scheme} (more about these later).
-The database is populated after all entities are defined and the required consistency checks are performed.
-Communication with the database happens through \textsc{JDBC} (Java Database Connectivity).
-As we're using \textsc{JDBC}, we could support a whole host of different database types.
-Currently, we support SQLite (no extra setup required, as the database is stored in a file), which is also the default, and MySQL (one of the most popular database products).
-After running our DSL program, the database will contain the rows defined using the DSL.\@
-% TODO import tables?
-
-We first intended to generate SQL scripts that would insert the generated entities in the database when executed, but this proved to be difficult because of the following reason.
-Imagine we want to generate an \cc{INSERT} statement that would insert a new City in the database.
-A City consists of a name of type String, and a country of type Country, which is another entity (or table).
-In the database table, the country field of the City table is defined as a foreign key that references the Country table via Country's primary key (an auto-generated ID).
-How would such an \cc{INSERT} statement then look like?
-
-\cc{INSERT INTO City (name, id\_Country) VALUES ("Brussels", ?)}
-
-Which value should come in the place of the question mark?
-
-The right thing to do, would be to insert the value of the auto-generated ID of the row representing Belgium in the Country table, but we don't know the value of this ID, as we haven't inserted Belgium it in the database yet.
-A possible alternative is to switch to manually generated IDs, but extra attention would have to be paid to prevent conflicts with existing IDs.
-We believe directly communicating with the database at run-time and retrieving the IDs after they were generated, is a more robust solution.
 
 \subsection{General Implementation Overview}
 \label{sec:general-implementation-overview}
@@ -369,8 +372,8 @@ We believe Pricing Schemes give users enough control over flight pricing.
 Of course, additional input parameters could be added, like the Airplane Model or the time of departure, but such changes require only little work.
 Users that wish not to use Pricing Schemes can provide a simple fall-through Pricing Scheme that doesn't influence the price at all.
 
-\subsection{Syntax}
-\label{sec:implementation-syntax}
+\subsection{Implementations Techniques}
+\label{sec:implementation-techniques}
 
 A pattern (or trick) we often used to add some syntactic sugar is the following.
 Suppose we want to define a city, Brussels for instance, in our DSL.\@
@@ -427,7 +430,6 @@ implicit def kmhUnit(kmhs: Int) = new {
 
 By defining separate case classes for these unit types instead of relying on the built-in types like \cc{Int} or \cc{Double}, the type checker will signal a type error whenever a user of our DSL forgets a suffix that converts a number to the right unit type.
 Of course, we could make it more extensible by defining a trait for speed, which \cc{KmH} and other classes like \cc{MpH} could implement, but this is a small change that could easily be made when necessary.
-
 
 
 \section{DSL Implementation}
