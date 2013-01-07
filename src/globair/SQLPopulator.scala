@@ -21,7 +21,9 @@ trait SQLDataTypeMapper {
       prepStat.setBigDecimal(i, bd.bigDecimal)
 
   def apply(entity: Entity)(prepStat: PreparedStatement, i: Int, idMap: IDMap) = entity.key match {
+    // A field of the Entity is used as a key
     case Some(keyName) => entity.row(keyName).prep(this)(prepStat, i, idMap)
+    // The Entity has an auto-generated key, which should be stored in the idMap
     case None => idMap get entity match {
       case Some(id) => prepStat.setInt(i, id)
       case None => stateError("No ID for entity " + entity)

@@ -66,20 +66,6 @@ object DBDSL {
   implicit def dateTimeField(d: DateTime) = new TimestampField { val repr = d.toTimestamp }
   implicit def foreignKeyField(e: Entity): Field[_] = new ForeignKeyField { val repr = e }
 
-
-  // abstract class Key[F](val colName: String) extends Field[F]
-  // case class StringKey(colName: String) extends Key[String](colName) {
-  //   def repr: String =
-  //   def mkStatement(output: SQLOutputFormat) = output.
-  // }
-
-  // TODO
-  case class Key[F](val field: Field[F], val colName: String)
-  // class AutoIncKey(val colName: String) extends Key[Nothing](new Field[Nothing] {
-  //   def repr = null
-  //   def mkStatement(
-  //   }, colName)
-
   type ID = Int
 
   type IDMap = Map[Entity, ID]
@@ -93,23 +79,21 @@ object DBDSL {
     // actual table row in the database.
     def row: Map[String, Field[_]]
 
-    // def key: Key[_] TODO
+    // None if the key is auto-generated, Some(fieldName) if one of
+    // the fields of an Entity is used as the key.
     def key: Option[String]
-
 
 
     // Helper function for defining `row`
     protected def columns(cols: (String, Field[_])*): Map[String, Field[_]] = Map(cols: _*)
 
-    // TODO
+    // Helper function to declare that the Entity has an
+    // auto-generated key.
     protected def autoInc(keyName: String): Option[String] = None
 
-    // TODO
+    // Helper function to declare that a field with name `keyName` is
+    // the key of the Entity.
     protected def useAsKey(keyName: String): Option[String] = Some(keyName)
-
-    // TODO
-    protected def unique(fields: String*): Unit = null
-
 
     def tableName = this.getClass.getSimpleName
 
