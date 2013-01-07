@@ -37,6 +37,9 @@ trait SQLPopulator {
   // JDBC String.
   def connect(jdbcString: String): Connection
 
+  // Override this one for a custom database skeleton. Should be the
+  // name of a file present in the resources folder.
+  val dbSkeleton = "/database.sql"
 
   // Override this one for a custom SQLDataTypeMapper
   val dataTypeMapper: SQLDataTypeMapper = new SQLDataTypeMapper() {}
@@ -44,14 +47,31 @@ trait SQLPopulator {
   // The important method
   final def populate(jdbcString: String)
                     (entitiesSeq: Seq[Entity]*): Unit = {
+    val allEntities = entitiesSeq.flatten
     using(jdbcString) { conn =>
-      ((Map(): IDMap) /: entitiesSeq.flatten)(insertAndSaveID(conn))
+      ((Map(): IDMap) /: allEntities)(insertAndSaveID(conn))
+      println("Successfully saved %d entities" format allEntities.length)
     }
   }
 
-  // Private helper to make the fold *more* readable
+  // Drop and reimport the database tables defined in dbSkeleton
+  final def prepareDatabase(jdbcString: String): Unit =
+    Option(getClass getResource dbSkeleton) match {
+      case None => stateError("Missing dbSkeleton: " + dbSkeleton)
+      case Some(res) => {
+        val statements = scala.io.Source.fromURL(res).mkString.split(";")
+        using(jdbcString) { conn =>
+          val statement = conn.createStatement()
+          statement.setQueryTimeout(30);
+          for (stat <- statements)
+          statement executeUpdate stat
+        }
+      }
+    }
+
+
+  // Private helper to make the fold in `populate` *more* readable
   private def insertAndSaveID(conn: Connection)(idMap: IDMap, entity: Entity): IDMap = {
-    println(entity)
     entity.insert(conn, dataTypeMapper, idMap) match {
       case Some(id) => idMap + (entity -> id)
       case None => idMap
@@ -76,7 +96,11 @@ trait SQLitePopulator extends SQLPopulator {
     DriverManager.getConnection(jdbcString)
   }
 
+  // SQLite requires a custom dbSkeleton
+  override val dbSkeleton = "/database.sqlite"
+
   override val dataTypeMapper = new SQLDataTypeMapper {
+    // SQLite doesn't support setBigDecimal(..)p
     override def apply(bd: BigDecimal)(prepStat: PreparedStatement, i: Int, idMap: IDMap) =
       prepStat.setString(i, bd.toString)
   }
