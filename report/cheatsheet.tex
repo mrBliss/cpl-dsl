@@ -3,6 +3,8 @@ Text between < and > symbols denotes variables.
 Text between [ and ] denotes grouping of (optional) text. | symbolizes a logical or. * denotes repitition.
 example: [a|b|c]* denotes multiple a, b or c's (aa, aabc, \dots).
 
+An example is given for every piece of syntax.
+
 \paragraph{Date}\hfill
 \begin{lstlisting}
 <DD Month YYYY>
@@ -116,7 +118,7 @@ val Business = seatType("Business")
 \paragraph{PricingScheme}\hfill
 \begin{lstlisting}
  val <valName> = new PricingScheme {
-		<eventual helper methods>
+		[<optional helper methods>]
 		[
 		val <schemeName>: PricingScheme ={
 			[
