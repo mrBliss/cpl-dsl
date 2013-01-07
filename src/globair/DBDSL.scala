@@ -103,12 +103,11 @@ object DBDSL {
       // generating the string for the PreparedStatement that looks
       // like "INSERT INTO tableName (col1, col2, ...) VALUES (?, ?, ...)",
       // The question marks are filled in by the actual values.
-      "INSERT INTO %s (%s) VALUES (%s)"
+      // "INSERT INTO %s (%s) VALUES (%s)"
       val prepStr = "INSERT INTO %s (%s) VALUES (%s)"
         .format(tableName,
                 row.map(_._1).mkString(", "),
                 row.map(_ => "?").mkString(", "))
-      println(prepStr) // TODO
       // The second argument indicates that we wish to receive the auto-generated keys
       val stat = conn.prepareStatement(prepStr, Statement.RETURN_GENERATED_KEYS)
       // Filling in the fields
