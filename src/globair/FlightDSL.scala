@@ -286,18 +286,25 @@ trait FlightDSL extends DelayedInit with DBDefinition {
 
   class Schedule(val schedule: Seq[(DateTime, Map[SeatType, (Int, Price)])] = Vector()) {
 
-    def at(time: Time, dates: Seq[Date])(seats: (SeatType, (Int, Price))*): Schedule = {
-      val seatMap = Map(seats:_*)
+    private def verifySeating(seatMap: Map[SeatType, (Int, Price)]) {
       require(!seatMap.isEmpty, "The flight must at least have one type of seats")
       val seatsPerType: Iterable[Int] = seatMap.values.map(_._1)
       if (seatsPerType.exists(_ < 0))
         argError("There cannot be a negative number of seats of a seat type")
       require(seatsPerType.sum > 0, "A flight must have at least one seat")
+    }
+
+    def at(time: Time, dates: Seq[Date])(seats: (SeatType, (Int, Price))*): Schedule = {
+      val seatMap = Map(seats:_*)
+      verifySeating(seatMap)
       new Schedule(schedule ++ (dates map (date => (date toDateTime time, seatMap))))
     }
 
-    def at(time: Time, date: Date)(seats: (SeatType, (Int, Price))*): Schedule =
-      new Schedule(schedule :+ (date toDateTime time, Map(seats:_*)))
+    def at(time: Time, date: Date)(seats: (SeatType, (Int, Price))*): Schedule = {
+      val seatMap = Map(seats:_*)
+      verifySeating(seatMap)
+      new Schedule(schedule :+ (date toDateTime time, seatMap))
+    }
 
     def except(dates: Date*): Schedule =
       new Schedule(schedule filterNot { case (dateTime, _) => dates exists (dateTime sameDay _) })
