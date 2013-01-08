@@ -482,13 +482,6 @@ implicit def kmhUnit(kmhs: Int) = new {
 By defining separate case classes for these unit types instead of relying on the built-in types like \cc{Int} or \cc{Double}, the type checker will signal a type error whenever a user of our DSL forgets a suffix that converts a number to the right unit type.
 Of course, we could make it more extensible by defining a trait for speed, which \cc{KmH} and other classes like \cc{MpH} could implement, but this is a small change that could easily be made when necessary.
 
-
-\clearpage
-\section{DSL Implementation}
-\label{sec:dsl-implementation}
-
-% The code implementing your DSL and any libraries on which it is based.
-
 \clearpage
 \section{Example DSL program(s)}
 \label{sec:example-dsl-programs}
@@ -702,7 +695,40 @@ FlightTemplate(SN, 324)(BRU -> CIA, 1187.km)(AirbusA380) {
 
 % A short description of how to compile and run your DSL and a guide to the structure of the submitted files.
 
-% TODO Thomas
+Along with this report, the attached zip file contains the source code and the required files to compile and run the DSL\@.
+To build and run our project, the \href{http://maven.apache.org/}{Apache Maven} build tool is required.
+We also provide a \cc{Makefile} that makes compiling and running easier.
+
+\paragraph{Building}
+To build the DSL, execute the following command in the folder containing the Makefile:\\
+\cc{\$ make}
+
+\paragraph{Running}
+To run the DSL, execute the following command in the folder containing the Makefile:\\
+\cc{\$ make run}
+
+By default an SQLite database will be used.
+After running the DSL program, an SQLite database called \cc{test.db} should be created and populated.
+The contents of the database file can be inspected with an SQLite viewer like \href{http://sourceforge.net/projects/sqlitebrowser/}{SQLite Database Browser} or \href{https://addons.mozilla.org/en-us/firefox/addon/sqlite-manager/}{SQLite Manager}.
+
+To switch to \textsc{MySQL}, in addition to a working \textsc{MySQL} setup, the following changes are required.
+Change the mixed-in trait in \cc{Example.scala} from \cc{SQLite\-Populator} to \cc{MySQL\-Populator}, and change the \sc{dbName} value to a valid JDBC String, e.g.\ {\color{Thistle}\cc{"jdbc:mysql://localhost/database\_name?user=dave\&password=julia"}}.
+
+
+\paragraph{Submitted files}
+The submitted zip file contains the following files and directories:
+
+\begin{itemize}
+\item \cc{src}: the folder containing the Scala source code.
+  For a basic overview of the source code, see Section~\ref{sec:general-implementation-overview}.
+\item \cc{resources}: the folder containing the database skeleton SQL scripts, one for SQLite and one for \textsc{MySQL}\@.
+\item \cc{test}: the folder containing a small test suite that was used to debug code related to dates and times.\footnote{We focused more on developing the DSL than on making the implementation robust through extensive test coverage.}
+\item \cc{pom.xml}: the project definition required for Maven.
+\item \cc{Makefile}: defines targets for easy compiling and running.
+\item \cc{report.pdf}: the report you are currently reading.
+\end{itemize}
+
+
 
 \end{document}
 
