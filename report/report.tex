@@ -714,10 +714,12 @@ Along with this report, the attached zip file contains the source code and the r
 To build and run our project, the \href{http://maven.apache.org/}{Apache Maven} build tool is required.
 We also provide a \cc{Makefile} that makes compiling and running easier.
 
+\vspace{-1em}
 \paragraph{Compiling}
 To compile the DSL, execute the following command in the folder containing the Makefile:\\
 \cc{\$ make}
 
+\vspace{-1em}
 \paragraph{Running}
 To run the DSL, execute the following command in the folder containing the Makefile:\\
 \cc{\$ make run}
@@ -728,13 +730,19 @@ By default an SQLite database will be used.
 After running the DSL program, an SQLite database called \cc{test.db} should be created and populated.
 The contents of the database file can be inspected with an SQLite viewer like \href{http://sourceforge.net/projects/sqlitebrowser/}{SQLite Database Browser} or \href{https://addons.mozilla.org/en-us/firefox/addon/sqlite-manager/}{SQLite Manager}.
 
-To switch to \textsc{MySQL}, in addition to a working \textsc{MySQL} setup, the following changes are required.
-Change the mixed-in trait in \cc{Example.scala} from \cc{SQLite\-Populator} to \cc{MySQL\-Populator}, and change the \sc{dbName} value to a valid JDBC String, e.g.\ {\color{Thistle}\cc{"jdbc:mysql://localhost/database\_name?user=dave\&password=julia"}}.
+Note that running the program can take a couple of minutes, this is because a (relatively) large number of entities is inserted into an SQLite database.
+Batch insertion would speed up this process, but it isn't fully supported by SQLite.
+As the focus lies more on designing the DSL than on the performance of the actual program, we haven't invested more time in improving the performance.
 
 If you have trouble compiling the DSL (or with Maven), a runnable JAR can be downloaded from \url{http://tinyurl.com/cpl-dsl-jar}.
 To run the JAR, execute the following command in the folder containing the JAR:\\
 \cc{\$ java -jar globair-1.0.0-jar-with-dependencies.jar}
 
+
+To switch to \textsc{MySQL}, in addition to a working \textsc{MySQL} setup, the following changes are required.
+Change the mixed-in trait in \cc{Example.scala} from \cc{SQLite\-Populator} to \cc{MySQL\-Populator}, and change the \sc{dbName} value to a valid JDBC String, e.g.\ {\color{Thistle}\cc{"jdbc:mysql://localhost/database\_name?user=dave\&password=julia"}}.
+
+\vspace{-1em}
 \paragraph{Submitted files}
 The submitted zip file contains the following files and directories:
 
@@ -742,7 +750,7 @@ The submitted zip file contains the following files and directories:
 \item \cc{src}: the folder containing the Scala source code.
   For a basic overview of the source code, see Section~\ref{sec:general-implementation-overview}.
 \item \cc{resources}: the folder containing the database skeleton SQL scripts, one for SQLite and one for \textsc{MySQL}\@.
-\item \cc{test}: the folder containing a small test suite that was used to debug code related to dates and times.\footnote{We focused more on developing the DSL than on making the implementation robust through extensive test coverage.}
+\item \cc{test}: the folder containing a small test suite that was used to debug code related to dates and times.
 \item \cc{pom.xml}: the project definition required for Maven.
 \item \cc{Makefile}: defines targets for easy compiling and running.
 \item \cc{report.pdf}: the report you are currently reading.
