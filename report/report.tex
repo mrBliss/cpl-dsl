@@ -714,8 +714,8 @@ Along with this report, the attached zip file contains the source code and the r
 To build and run our project, the \href{http://maven.apache.org/}{Apache Maven} build tool is required.
 We also provide a \cc{Makefile} that makes compiling and running easier.
 
-\paragraph{Building}
-To build the DSL, execute the following command in the folder containing the Makefile:\\
+\paragraph{Compiling}
+To compile the DSL, execute the following command in the folder containing the Makefile:\\
 \cc{\$ make}
 
 \paragraph{Running}
@@ -731,6 +731,9 @@ The contents of the database file can be inspected with an SQLite viewer like \h
 To switch to \textsc{MySQL}, in addition to a working \textsc{MySQL} setup, the following changes are required.
 Change the mixed-in trait in \cc{Example.scala} from \cc{SQLite\-Populator} to \cc{MySQL\-Populator}, and change the \sc{dbName} value to a valid JDBC String, e.g.\ {\color{Thistle}\cc{"jdbc:mysql://localhost/database\_name?user=dave\&password=julia"}}.
 
+If you have trouble compiling the DSL (or with Maven), a runnable JAR can be downloaded from \url{http://tinyurl.com/cpl-dsl-jar}.
+To run the JAR, execute the following command in the folder containing the JAR:\\
+\cc{\$ java -jar globair-1.0.0-jar-with-dependencies.jar}
 
 \paragraph{Submitted files}
 The submitted zip file contains the following files and directories:
