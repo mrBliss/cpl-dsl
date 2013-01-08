@@ -185,7 +185,7 @@ trait FlightDSL extends DelayedInit with DBDefinition {
     }
   }
 
-  def every(weekDays: WeekDay*): Seq[WeekDay] = weekDays
+  def every(weekDay: WeekDay, weekDays: WeekDay*): Seq[WeekDay] = weekDay +: weekDays
 
   private var flightTemplates: Vector[FlightTemplate] = Vector()
   private var flights: Vector[Flight] = Vector()
@@ -291,28 +291,30 @@ trait FlightDSL extends DelayedInit with DBDefinition {
   class Schedule(val schedule: Seq[(DateTime, Map[SeatType, (Int, Price)])] = Vector()) {
 
     private def verifySeating(seatMap: Map[SeatType, (Int, Price)]) {
-      require(!seatMap.isEmpty, "The flight must at least have one type of seats")
       val seatsPerType: Iterable[Int] = seatMap.values.map(_._1)
       if (seatsPerType.exists(_ < 0))
         argError("There cannot be a negative number of seats of a seat type")
       require(seatsPerType.sum > 0, "A flight must have at least one seat")
     }
 
-    def at(time: Time, dates: Seq[Date])(seats: (SeatType, (Int, Price))*): Schedule = {
-      val seatMap = Map(seats:_*)
+    def at(time: Time, dates: Seq[Date])(seat: (SeatType, (Int, Price)),
+                                         seats: (SeatType, (Int, Price))*): Schedule = {
+      val seatMap = Map(seat +: seats:_*)
       verifySeating(seatMap)
       new Schedule(schedule ++ (dates map (date => (date toDateTime time, seatMap))))
     }
 
-    def at(time: Time, date: Date)(seats: (SeatType, (Int, Price))*): Schedule = {
-      val seatMap = Map(seats:_*)
+    def at(time: Time, date: Date)(seat: (SeatType, (Int, Price)),
+                                   seats: (SeatType, (Int, Price))*): Schedule = {
+      val seatMap = Map(seat +: seats:_*)
       verifySeating(seatMap)
       new Schedule(schedule :+ (date toDateTime time, seatMap))
     }
 
-    def except(dates: Date*): Schedule =
-      new Schedule(schedule filterNot { case (dateTime, _) => dates exists (dateTime sameDay _) })
-
+    def except(date: Date, dates: Date*): Schedule = {
+      val allDates = date +: dates
+      new Schedule(schedule filterNot { case (dateTime, _) => allDates exists (dateTime sameDay _) })
+    }
   }
 
 
