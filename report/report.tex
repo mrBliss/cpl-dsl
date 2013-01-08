@@ -332,7 +332,9 @@ The only abstract member of this trait is:
 
 This method will be called only once, should load the correct JDBC driver, and return a new connection to the database.
 Also present is the \cc{SQLDataTypeMapper} trait, which takes care of filling in a PreparedStatement with the appropriate methods, e.g.\ \cc{Prepared\-State\-ment\-\#set\-String(..)}, \cc{Prepared\-State\-ment\-\#set\-Int(..)}, etc.
-The default methods in this trait can also be overriden by database-specific ones, as for example SQLite does not support the \cc{Prepared\-State\-ment\-\#set\-Big\-Decimal(..)} method.
+The \cc{SQLDataTypeMapper} trait also defines \sc{dbSkeleton}, a string pointing to a database skeleton file, an SQL script that will generate the required tables.
+The default methods in this trait can also be overriden by database-specific ones, as for example SQLite does not support the \cc{Prepared\-State\-ment\-\#set\-Big\-Decimal(..)} method, and also requires a custom \sc{dbSkeleton} file because its SQL syntax differs.
+
 The user of our DSL can choose which database to use by mixing-in the database-specific SQLPopulator trait (\cc{SQLitePopulator} or \cc{MySQL\-Populator}) of his choice.
 
 \paragraph{FlightDSL.scala}
