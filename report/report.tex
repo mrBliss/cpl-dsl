@@ -192,12 +192,6 @@ The price depends on the flight and the seat type.
 This means that two seats, both of the same seat type and both on flights that follow the same template, can have different prices on different dates.
 
 
-
-\begin{figure}[ht!]
-  \includegraphics[width=1.0\textwidth]{../analysis/dbtables-diagram.png}
-  \caption{Database Tables}\label{fig:database-tables}
-\end{figure}
-
 \clearpage
 \section{Design Description}
 \label{sec:design-description}
@@ -283,23 +277,37 @@ In hindsight, our DSL could have been much \emph{prettier} if we used Scala 2.10
 
 To implement the database functionality, we use the JDBC API, see Section~\ref{sec:design-description} for the motivation of this decision.
 Also, using a mature API is much safer and more robust than generating SQL scripts, which are essentially strings.
-JDBC already does a good job of bridging most differences between databases.
-We did not choose to build further upon existing Scala database libraries, like \href{http://slick.typesafe.com/}{Slick}, or \href{http://squeryl.org/}{Squeryl}, because the are in fact already DSLs.
+JDBC already does a good job of handling most differences between databases.
+We chose to not build further upon existing Scala database libraries, like \href{http://slick.typesafe.com/}{Slick}, or \href{http://squeryl.org/}{Squeryl}, because they are in fact already DSLs.
 
 No loose strings have been used to insert SQL statements into the database.
 All SQL statements are created using the \cc{Prepared\-Statement} class.
-Constructing SQL statements from strings is a well-known source of bugs and vulnerability issues, i.e.\ SQL injection attacks.
+Constructing SQL statements from strings is a well-known source of bugs and security issues, i.e.\ SQL injection attacks.
 
-To create such a \cc{PreparedStatement}, a \sc{prepareStatement} method was defined.
-% TODO CONTINUE
-The method expects a connection to the specific database, an SQLDataTypeMapper and an IDMap.
-The statement will be constructed like this:
-\begin{verbatim}
-val prepStr = "INSERT INTO %s (%s) VALUES (%s)"
-\end{verbatim}
-This string will then be formatted to fill in the placeholders with the right arguments.
-The SQLDataTypeMapper makes sure the defined types of Scala and the types of the SQL database are compatible.
-Afterwards, the string is prepared and executed using the prepareStatement method of Connection.
+We converted the domain model as described in Section~\ref{sec:domain-analysis} to SQL tables, see Figure~\ref{fig:database-tables}.
+We decided to add and simplify some tings during mapping the domain entities to database tables:
+
+\begin{figure}[ht!]
+  \includegraphics[width=1.0\textwidth]{../analysis/dbtables-diagram.png}
+  \caption{SQL tables}\label{fig:database-tables}
+\end{figure}
+
+\begin{itemize}
+\item Every table has a primary key, where a unique code is among the fields of the table, it is used.
+  When there is no unique field for a table, e.g.\ City, or in the case of composite unique keys, we decided to use an automatically generated ID.
+\item Even though our domain model allows the AirplaneModel to differ for Flights of the same FlightTemplate, we opted to use one AirplaneModel per FlightTemplate.
+  The domain expert confirmed that we could make this assumption. % TODO why not in the domain model?
+\item We decided not to create tables for Seats and Prices, as the number of resulting rows would be enormous (even if Prices were stored as a field of Seat).
+  Our motivations is the following.
+  In reality, the sold tickets will have to be stored in the database too (this is out of the scope of our domain).
+  Along with the customer and flight information of the ticket, the seat price and number could be stored in the same table.
+
+  What we do instead is to store SeatPricings for each SeatType available on a Flight.
+  An example SeatPricing row could be: ``For Flight \cc{id\_Flight}, there are \cc{nbSeats} seats available for type \cc{id\_SeatType} for \cc{price} euros''.
+  Using the information stored in SeatPricing, information of individual Seats can be generated and deduced as well.
+\end{itemize}
+
+
 
 \subsection{General Implementation Overview}
 \label{sec:general-implementation-overview}
