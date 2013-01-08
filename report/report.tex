@@ -369,7 +369,7 @@ A Schedule object stores a sequence of moments when flights would occur, along w
 Flight objects will be generated for every moment in the Schedule.
 
 To give maximum control over pricing information, we also introduced Pricing Schemes, which are Airline Company-specific.
-A Pricing Scheme consists of a partial function from Seat Type, Date, and Price to Price.
+A Pricing Scheme consists of a partial function from Seat Type, Date, and Price to Price.\footnote{A type alias called \sc{PricingMatcher} is provided.}
 It provides users an easy way to adjust prices on flights on certain dates and per Seat Type.
 Have a look at the following example:
 
@@ -378,11 +378,11 @@ new PricingScheme {
   def inSummer(date: Date): Boolean =
     date.in(21 June 2013, 21 September 2013)
 
-  val highSeason: PricingScheme = {
+  val highSeason: PricingMatcher = {
     case (_, date, price) if inSummer(date) => price * 1.1
   }
 
-  val firstClassTax: PricingScheme = {
+  val firstClassTax: PricingMatcher = {
     case (FirstClass, _, price) if price > 500.EUR
       => price + 50.EUR
   }
@@ -576,7 +576,7 @@ val BM = company("BM", "British Midlands Airways",
     date.in(1 July 2013, 31 August 2013) ||
     date.in(15 December 2013, 31 March 2014)
 
-  val highSeason: PricingScheme = {
+  val highSeason: PricingMatcher = {
     case (Business, date, price) if inHighSeason(date)
       => price * 1.1
     case (Economy, date, price) if inHighSeason(date)
@@ -601,16 +601,16 @@ val SN = company("SN", "SN Brussels Airlines", new PricingScheme {
   def inSummer(date: Date): Boolean =
     date.in(21 June 2013, 21 September 2013)
 
-  val highSeason: PricingScheme = {
+  val highSeason: PricingMatcher = {
     case (_, date, price) if inSummer(date) => price * 1.1
   }
 
-  val specialActionOnSecondClass: PricingScheme = {
+  val specialActionOnSecondClass: PricingMatcher = {
     case (SecondClass, date, price)
       if date.in(15 July 2013, 15 August 2013) => price - 50.EUR
   }
 
-  val backToSchool: PricingScheme = {
+  val backToSchool: PricingMatcher = {
     case (ThirdClass, date, price)
       if date.in(16 August 2013, 31 August 2013) => price - 10.EUR
   }

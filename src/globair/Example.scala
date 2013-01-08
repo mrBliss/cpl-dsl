@@ -56,7 +56,7 @@ object Example extends FlightDSL with SQLitePopulator {
       date.in(1 July 2013, 31 August 2013) ||
       date.in(15 December 2013, 31 March 2014)
 
-    val highSeason: PricingScheme = {
+    val highSeason: PricingMatcher = {
       case (Business, date, price) if inHighSeason(date) => price * 1.1
       case (Economy, date, price) if inHighSeason(date) => price * 1.05
     }
@@ -69,15 +69,15 @@ object Example extends FlightDSL with SQLitePopulator {
     def inSummer(date: Date): Boolean =
       date.in(21 June 2013, 21 September 2013)
 
-    val highSeason: PricingScheme = {
+    val highSeason: PricingMatcher = {
       case (_, date, price) if inSummer(date) => price * 1.1
     }
 
-    val specialActionOnSecondClass: PricingScheme = {
+    val specialActionOnSecondClass: PricingMatcher = {
       case (SecondClass, date, price) if date.in(15 July 2013, 15 August 2013) => price - 50.EUR
     }
 
-    val backToSchool: PricingScheme = {
+    val backToSchool: PricingMatcher = {
       case (ThirdClass, date, price) if date.in(16 August 2013, 31 August 2013) => price - 10.EUR
     }
 

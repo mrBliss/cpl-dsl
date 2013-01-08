@@ -251,17 +251,17 @@ trait FlightDSL extends DelayedInit with DBDefinition {
   trait PricingScheme {
 
     // Type alias
-    type PricingScheme = PartialFunction[(SeatType, Date, Price), Price]
+    type PricingMatcher = PartialFunction[(SeatType, Date, Price), Price]
 
-    private val defaultScheme: PricingScheme = {
+    protected val defaultScheme: PricingMatcher = {
       case (_, _, price) => price
     }
 
     // Applies this partial function and then schemeA, if this partial
     // function isn't defined on the input, schemeA is applied
     // directly.
-    implicit def andAlsoFunc(schemeA: PricingScheme) = new {
-      def andAlso(schemeB: PricingScheme): PricingScheme =
+    implicit def andAlsoFunc(schemeA: PricingMatcher) = new {
+      def andAlso(schemeB: PricingMatcher): PricingMatcher =
         new PartialFunction[(SeatType, Date, Price), Price] {
           def isDefinedAt(x: (SeatType, Date, Price)): Boolean =
             schemeA.isDefinedAt(x) || schemeB.isDefinedAt(x)
@@ -280,7 +280,7 @@ trait FlightDSL extends DelayedInit with DBDefinition {
     def apply(seatType: SeatType, date: Date, price: Price): Price = (scheme orElse defaultScheme)(seatType, date, price)
 
     // Abstract, must be provided when defining a PricingScheme
-    val scheme: PricingScheme
+    val scheme: PricingMatcher
 
   }
 
