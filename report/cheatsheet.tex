@@ -1,28 +1,33 @@
 This section summarizes how to define each entity in the DSL.
-Text between < and > symbols denotes variables.
-Text between [ and ] denotes grouping of (optional) text. | symbolizes a logical or. * denotes repitition.
-example: [a|b|c]* denotes multiple a, b or c's (aa, aabc, \dots).
+Text between `$<$' and `$>$' symbols denotes variables.
+Text between `$[$' and `$]$' denotes grouping of (optional) text.
+A `$|$' symbolizes a logical or.
+A `$^*$' denotes that an element can be repeated zero ore more times.
+A `$^+$' denotes that an element can be repeated one ore more times.
+example: $[a|b|c]^*$ denotes multiple $a$, $b$ or $c$'s ($aa$, $aabc$, \dots).
 
-An example is given for every piece of syntax.
+An example is given for every syntax element.
 
-\paragraph{Date}\hfill
+\newcommand{\elem}[1]{\vspace{-1.5em}\paragraph{#1}\hfill}
+
+\elem{Date}
 \begin{lstlisting}
 <DD Month YYYY>
 
 example:
-val christmas = 25 December 2012
+val christmas = 25 December 2013
 \end{lstlisting}
-		
-\paragraph{Date Ranges / periods}\hfill
+
+\elem{Date Ranges / intervals}
 \begin{lstlisting}
 (<fromDate>) -> (<toDate>)
 
 example:
-val wholeYear = (1 January 2012) -> (31 December 2012)
-val summer = (21 June 2012) -> (21 September 2012)
+val wholeYear = (1 January 2013) -> (31 December 2013)
+val summer = (21 June 2013) -> (21 September 2013)
 \end{lstlisting}
-		
-\paragraph{Time}\hfill
+
+\elem{Time}
 \begin{lstlisting}
 <hours> h <minutes>
 
@@ -30,41 +35,43 @@ example:
 val noon = 12 h 00
 \end{lstlisting}
 
-\paragraph{Weekday}\hfill
+\elem{Weekday}
 \begin{lstlisting}
 <Weekday>
 
 example:
 Monday
 \end{lstlisting}
-	    
-\paragraph{Weekday Range}\hfill
+
+\elem{Weekday Range}
 \begin{lstlisting}
 <fromWeekday> -> <toWeekday>
 
 example:
 val wholeWeek = Monday -> Sunday
+val longWeekend = Friday -> Monday
 \end{lstlisting}
+\clearpage
 
-	    
-\paragraph{Weekly recurrences}\hfill
+\elem{Weekly recurrences}
 \begin{lstlisting}
-every(<Weekday>)
+every(<Weekday>+)
 
 example:
 every(Monday)
-\end{lstlisting}
-	    
-\paragraph{Weekly recurrences during period}\hfill
-\begin{lstlisting}
-every(<Weekday>) during <period>
- 
-example:
-val summer = (21 June 2012) -> (21 September 2012)
-every(Monday) during summer
+every(Monday, Wednesday, Friday)
 \end{lstlisting}
 
-\paragraph{Country}\hfill
+\elem{Weekly recurrences during interval}
+\begin{lstlisting}
+every(<Weekday>+) during <interval>
+
+example:
+val summer = (21 June 2013) -> (21 September 2013)
+every(Monday, Tuesday) during summer
+\end{lstlisting}
+
+\elem{Country}
 \begin{lstlisting}
 val <valName> = country("<countryName>")
 
@@ -73,7 +80,7 @@ val Belgium = country("Belgium")
 val Italy = country("Italy")
 \end{lstlisting}
 
-\paragraph{City}\hfill
+\elem{City}
 \begin{lstlisting}
 val <valName> = "<cityName>" in <country>
 
@@ -82,24 +89,25 @@ val Brussels = "Brussels" in Belgium
 val Rome = "Rome" in Italy
 \end{lstlisting}
 
-\paragraph{Airport}\hfill
+\elem{Airport}
 \begin{lstlisting}
 val <valName> = ("<airportCode>","<airportName>") at <city>
-   
+
 example:
 val BRU = ("BRU", "Brussels Airport") at Brussels
 val CIA = ("CIA", "Rome Ciampino Airport") at Rome
 \end{lstlisting}
 
-\paragraph{Manufacturer}\hfill
+\elem{Manufacturer}
 \begin{lstlisting}
-val <valName> = manufacturer("<manufacturer>")
+val <valName> = manufacturer("<manufacturerName>")
 
 example:
 val Airbus = manufacturer("Airbus")
 \end{lstlisting}
+\clearpage
 
- \paragraph{Airplane Model}\hfill
+\elem{Airplane Model}
 \begin{lstlisting}
 val <valName> = "<modelName>" of <manufacturer> carries <nbOfSeats>.p flies <speedInKmph>.kmh
 
@@ -107,7 +115,7 @@ example:
 val AirbusA320 = "Airbus A320" of Airbus carries 150.p flies 828.kmh
 \end{lstlisting}
 
- \paragraph{Seat Type}\hfill
+ \elem{Seat Type}
 \begin{lstlisting}
 val <valName> = seatType("<seatTypeName>")
 
@@ -115,83 +123,98 @@ example:
 val Business = seatType("Business")
 \end{lstlisting}
 
-\paragraph{PricingScheme}\hfill
+\elem{PricingScheme}
 \begin{lstlisting}
- val <valName> = new PricingScheme {
-		[<optional helper methods>]
-		[
-		val <schemeName>: PricingScheme ={
-			[
-			case(<seatType>, <date>, <price>) [if <condition>] =>
-			    <priceCalculation>
-			]*
-		      }
-		 ]*
-		val scheme = <schemeName> [
-			      [AndAlso|OrElse|AndThen] <otherSchemeName>
-				  ]*
-		}
-	
-example:
-val KLMPricingScheme = new PricingScheme {
-		def isHighSeason(date: Date): Boolean =
-		  date.in(15 December 2012, 31 March 2013) ||
-		  date.in(1 July 2013, 31 August 2013) ||
-		  date.in(15 December 2013, 31 March 2014)
-
-		val highSeason: PricingScheme = {
-			case (Business, date, price) if isHighSeason(date) =>
-			    price * 1.1
-			case (Economy, date, price) if isHighSeason(date) =>
-			    price * 1.05
-			}
-			    
-		val backToSchool: PricingScheme = {
-			case (ThirdClass, date, price) if date.in(15 August 2012, 31 August 2012) =>
-			    price - 10.EUR
-			}
-		val scheme = highSeason AndAlso backToSchool
-	}
-\end{lstlisting}
-
-\paragraph{Airline Company}\hfill
-\begin{lstlisting}
-val <valName> = company(<companyCode>, <companyName>, <pricingScheme>)
+new PricingScheme {
+  [<optional helper methods>]
+  [
+  val <schemeName>: PricingMatcher = {
+    [
+    case (<seatType>, <date>, <price>) [if <condition>] =>
+        <priceCalculation>
+    ]*
+  }
+  ]*
+  val scheme = <schemeName> [
+          [AndAlso|OrElse|AndThen] <otherSchemeName>
+        ]*
+}
 
 example:
-val KLM = company("KLM", "Koninklijke Luchtvaart Maatschappij", KLMPricingScheme)
+new PricingScheme {
+    def isHighSeason(date: Date): Boolean =
+      date.in(15 December 2012, 31 March 2013) ||
+      date.in(1 July 2013, 31 August 2013) ||
+      date.in(15 December 2013, 31 March 2014)
+
+    val highSeason: PricingMatcher = {
+      case (Business, date, price) if isHighSeason(date) =>
+          price * 1.1
+      case (Economy, date, price) if isHighSeason(date) =>
+          price * 1.05
+      }
+
+    val backToSchool: PricingMatcher = {
+      case (ThirdClass, date, price)
+        if date.in(15 August 2013, 31 August 2013) =>
+          price - 10.EUR
+    }
+    val scheme = highSeason AndAlso backToSchool
+  }
 \end{lstlisting}
-	    
-\paragraph{Schedule}\hfill
+
+\elem{Airline Company}
+\begin{lstlisting}
+val <valName> = company(<companyCode>, <companyName>[, <pricingScheme>])
+
+example:
+val KLM = company("KLM", "Koninklijke Luchtvaart Maatschappij",
+                  KLMPricingScheme)
+val SN = company("SN", "SN Brussels Airlines")
+\end{lstlisting}
+
+\elem{Schedule}
 \begin{lstlisting}
 val <valName> = new Schedule()
-	[
-	.at(<time>, <dates>){
-	   [<seatType> -> (<nbOfSeats>.seats at <price>.EUR)]*
-	}
-	|.at(<time>, <date>){
-	   [<seatType> -> (<nbOfSeats>.seats at <price>.EUR)]*
-	}
-	|.except(<dates>)
-	]*
+  [
+  .at(<time>, <dates>) {
+     <seatType> -> (<nbOfSeats>.seats at <price>.EUR)[;
+     <seatType> -> (<nbOfSeats>.seats at <price>.EUR)]*
+  }
+  |.at(<time>, <date>) {
+     <seatType> -> (<nbOfSeats>.seats at <price>.EUR)[;
+     <seatType> -> (<nbOfSeats>.seats at <price>.EUR)]*
+  }
+  |.except(<dates>+)
+  ]*
+
 example:
 val wholeWeek = Monday -> Sunday
-val schedule =  new Schedule()
-		.at(21 h 40, wholeWeek during winter) {
-			FirstClass -> (42.seats at 600.EUR)
-			SecondClass -> (102.seats at 325.EUR)
-			ThirdClass -> (500.seats at 287.EUR)
-		}.except(25 December 2012, 6 January 2013)
-		.at(15 h 3, 24 December 2012) {
-			Business -> (20.seats at 400.EUR)
-			 Economy -> (125.seats at 300.EUR)
-		}
+val schedule = new Schedule()
+    .at(21 h 40, wholeWeek during winter) {
+      Business -> (25.seats at 250.EUR);
+      Economy -> (110.seats at 150.EUR)
+    }.except(6 January 2013, 25 December 2013)
+    .at(15 h 3, 24 December 2013) {
+      Business -> (20.seats at 400.EUR);
+      Economy -> (125.seats at 300.EUR)
+    }
 \end{lstlisting}
 
-\paragraph{Flight Template}\hfill
+\elem{Flight Template}
 \begin{lstlisting}
-FlightTemplate(<company>, <flightCode>)(<fromAirport> -> <toAirport>, <distance>.km)(<airplaneModel>){<schedule>}
-		
+FlightTemplate(<company>, <flightCode>)
+              (<fromAirport> -> <toAirport>, <distance>.km)
+              (<airplaneModel>)
+              {<schedule>}
+
 example:
 FlightTemplate(KLM, 324)(BRU -> CIA, 1187.km)(AirbusA380){schedule}
 \end{lstlisting}
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% ispell-local-dictionary: "american"
+%%% TeX-master: "report"
+%%% End:
