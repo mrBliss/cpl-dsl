@@ -76,7 +76,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>globair.DB</mainClass>
+              <mainClass>globair.Example</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>
