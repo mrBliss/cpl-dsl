@@ -10,7 +10,6 @@ import java.sql.{Connection, DriverManager, PreparedStatement, Statement, Timest
 
 object DBDSL {
 
-  // TODO temp
   type Price = BigDecimal
 
   /**
