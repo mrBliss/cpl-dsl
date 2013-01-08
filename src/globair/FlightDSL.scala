@@ -126,10 +126,10 @@ trait FlightDSL extends DelayedInit with DBDefinition {
   private var airlineCompanies: Vector[AirlineCompany] = Vector()
   private var pricingSchemes: Map[AirlineCompany, PricingScheme] = Map()
   def company(code: String, name: String,
-              pricingScheme: => PricingScheme): AirlineCompany = {
+              pricingScheme: PricingScheme = defaultPricingScheme): AirlineCompany = {
     val company = AirlineCompany(AirlineCode(code), name)
     airlineCompanies :+= company
-    pricingSchemes += (company -> (pricingScheme))
+    pricingSchemes += (company -> pricingScheme)
     company
   }
 
@@ -282,6 +282,10 @@ trait FlightDSL extends DelayedInit with DBDefinition {
     // Abstract, must be provided when defining a PricingScheme
     val scheme: PricingMatcher
 
+  }
+
+  private val defaultPricingScheme = new PricingScheme {
+    val scheme: PricingMatcher = defaultScheme
   }
 
   class Schedule(val schedule: Seq[(DateTime, Map[SeatType, (Int, Price)])] = Vector()) {
